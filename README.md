@@ -6,7 +6,7 @@ Multi-agent orchestration and LLM provider abstraction for Claude Code via the M
 
 **Version:** 1.0.0
 **Author:** Luke Steuber
-**Landing Page:** https://dr.eamer.dev/creamwalker/
+**Landing Page:** https://dr.eamer.dev/dreamwalker/
 **License:** MIT
 
 ---
@@ -801,9 +801,9 @@ python -m dreamwalker_mcp.test_orchestration
 
 ### Getting Help
 
-- **Documentation:** https://dr.eamer.dev/creamwalker/
+- **Documentation:** https://dr.eamer.dev/dreamwalker/
 - **GitHub Issues:** https://github.com/yourusername/dreamwalker-mcp/issues
-- **API Reference:** https://dr.eamer.dev/creamwalker/api/
+- **API Reference:** https://dr.eamer.dev/dreamwalker/api/
 - **Examples:** https://github.com/yourusername/dreamwalker-mcp/tree/main/examples
 - **Community:** Join discussions in GitHub Discussions
 
@@ -952,7 +952,7 @@ Built with:
 - And many other open-source libraries (see `requirements.txt`)
 
 **Author:** Luke Steuber
-**Landing Page:** https://dr.eamer.dev/creamwalker/
+**Landing Page:** https://dr.eamer.dev/dreamwalker/
 **Version:** 1.0.0
 **License:** MIT
 

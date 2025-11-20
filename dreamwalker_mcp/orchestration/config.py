@@ -9,7 +9,6 @@ Author: Luke Steuber
 
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any
-from .models import AgentType
 
 
 @dataclass
@@ -153,12 +152,12 @@ class OrchestratorConfig:
 
 
 @dataclass
-class BeltalowdaConfig(OrchestratorConfig):
+class DreamCascadeConfig(OrchestratorConfig):
     """
-    Configuration specific to Beltalowda hierarchical orchestrator
+    Configuration specific to Dream Cascade hierarchical orchestrator
 
-    Extends base config with Beltalowda-specific options for
-    Belters, Drummers, and Camina agents.
+    Extends base config with Dream Cascade-specific options for
+    workers, mid-level synthesis, and executive synthesis agents.
     """
 
     # Beltalowda-specific timeouts
@@ -188,11 +187,11 @@ class BeltalowdaConfig(OrchestratorConfig):
 
 
 @dataclass
-class SwarmConfig(OrchestratorConfig):
+class DreamSwarmConfig(OrchestratorConfig):
     """
-    Configuration specific to Swarm Search orchestrator
+    Configuration specific to Dream Swarm Search orchestrator
 
-    Extends base config with Swarm-specific options for
+    Extends base config with Dream Swarm-specific options for
     specialized search agents.
     """
 

@@ -12,6 +12,18 @@ Tools provided:
 - get_semantic_scholar_paper: Get paper details
 - wayback_search: Search Wayback Machine
 - wayback_available_snapshots: List available snapshots
+- wikipedia_search: Search Wikipedia articles
+- wikipedia_get_summary: Get article summary
+- wikipedia_get_full_content: Get full article content
+- weather_get_current: Get current weather conditions (NOAA)
+- weather_get_forecast: Get weather forecast (NOAA)
+- weather_get_alerts: Get weather alerts by state (NOAA)
+- youtube_search_videos: Search YouTube videos
+- youtube_channel_statistics: Get channel stats
+- youtube_playlist_items: List playlist videos
+- news_top_headlines: Get top news headlines
+- news_search: Search news articles
+- news_sources: List news sources
 
 Resources provided:
 - census://variables/{table}: Census variable catalog
@@ -30,6 +42,10 @@ sys.path.insert(0, '/home/coolhand/shared')
 
 from config import ConfigManager
 from data_fetching import ArxivClient, ArchiveClient, CensusClient, SemanticScholarClient
+from data_fetching.wikipedia_client import WikipediaClient
+from data_fetching.weather_client import WeatherClient
+from data_fetching.youtube_client import YouTubeClient
+from data_fetching.news_client import NewsClient
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +71,10 @@ class DataServer:
         self._arxiv_client = None
         self._semantic_scholar_client = None
         self._archive_client = None
+        self._wikipedia_client = None
+        self._weather_client = None
+        self._youtube_client = None
+        self._news_client = None
 
     def get_census_client(self) -> CensusClient:
         """Get or create Census client."""
@@ -83,6 +103,36 @@ class DataServer:
         if self._archive_client is None:
             self._archive_client = ArchiveClient()
         return self._archive_client
+
+    def get_wikipedia_client(self) -> WikipediaClient:
+        """Get or create Wikipedia client."""
+        if self._wikipedia_client is None:
+            self._wikipedia_client = WikipediaClient()
+        return self._wikipedia_client
+
+    def get_weather_client(self) -> WeatherClient:
+        """Get or create Weather client."""
+        if self._weather_client is None:
+            self._weather_client = WeatherClient()
+        return self._weather_client
+
+    def get_youtube_client(self) -> YouTubeClient:
+        """Get or create YouTube client."""
+        if self._youtube_client is None:
+            api_key = self.config.get('YOUTUBE_API_KEY')
+            if not api_key:
+                raise RuntimeError("YOUTUBE_API_KEY not configured")
+            self._youtube_client = YouTubeClient(api_key=api_key)
+        return self._youtube_client
+
+    def get_news_client(self) -> NewsClient:
+        """Get or create News client."""
+        if self._news_client is None:
+            api_key = self.config.get('NEWS_API_KEY')
+            if not api_key:
+                raise RuntimeError("NEWS_API_KEY not configured")
+            self._news_client = NewsClient(api_key=api_key)
+        return self._news_client
 
     # -------------------------------------------------------------------------
     # MCP Tools - Census Bureau
@@ -493,6 +543,649 @@ class DataServer:
             }
 
     # -------------------------------------------------------------------------
+    # MCP Tools - Wikipedia
+    # -------------------------------------------------------------------------
+
+    def tool_wikipedia_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: wikipedia_search
+
+        Search Wikipedia articles by keyword.
+
+        Arguments:
+            query (str): Search keywords
+            limit (int, optional): Max results (default: 10, max: 25)
+
+        Returns:
+            {success: bool, results: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+
+            limit = arguments.get('limit', 10)
+            limit = min(limit, 25)  # Cap at 25
+
+            client = self.get_wikipedia_client()
+            result = client.search(query=query, limit=limit)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "results": result.get('results', []),
+                "metadata": {
+                    "query": query,
+                    "result_count": result.get('count', 0),
+                    "source": "Wikipedia",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in wikipedia_search: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_wikipedia_get_summary(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: wikipedia_get_summary
+
+        Get a concise summary of a Wikipedia article.
+
+        Arguments:
+            title (str): Wikipedia article title
+
+        Returns:
+            {success: bool, article: Dict}
+        """
+        try:
+            title = arguments.get('title')
+            if not title:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: title"
+                }
+
+            client = self.get_wikipedia_client()
+            result = client.get_summary(title=title)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "article": {
+                    "title": result.get('title'),
+                    "summary": result.get('summary'),
+                    "page_id": result.get('page_id'),
+                    "image": result.get('image'),
+                    "url": result.get('url')
+                },
+                "metadata": {
+                    "source": "Wikipedia",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in wikipedia_get_summary: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_wikipedia_get_full_content(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: wikipedia_get_full_content
+
+        Retrieve the full content of a Wikipedia article.
+
+        Arguments:
+            title (str): Wikipedia article title
+
+        Returns:
+            {success: bool, article: Dict}
+        """
+        try:
+            title = arguments.get('title')
+            if not title:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: title"
+                }
+
+            client = self.get_wikipedia_client()
+            result = client.get_full_content(title=title)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "article": {
+                    "title": result.get('title'),
+                    "content": result.get('content'),
+                    "page_id": result.get('page_id'),
+                    "word_count": result.get('word_count'),
+                    "url": result.get('url')
+                },
+                "metadata": {
+                    "source": "Wikipedia",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in wikipedia_get_full_content: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - Weather (NOAA)
+    # -------------------------------------------------------------------------
+
+    def tool_weather_get_current(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: weather_get_current
+
+        Get current weather conditions for coordinates.
+
+        Arguments:
+            latitude (float): Latitude in decimal degrees
+            longitude (float): Longitude in decimal degrees
+
+        Returns:
+            {success: bool, location: Dict, current: Dict, metadata: Dict}
+        """
+        try:
+            latitude = arguments.get('latitude')
+            longitude = arguments.get('longitude')
+
+            if latitude is None or longitude is None:
+                return {
+                    "success": False,
+                    "error": "Missing required arguments: latitude and longitude"
+                }
+
+            client = self.get_weather_client()
+            result = client.get_current_weather(latitude=latitude, longitude=longitude)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "location": result.get('location', {}),
+                "current": result.get('current', {}),
+                "metadata": {
+                    "source": "NOAA Weather Service",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in weather_get_current: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_weather_get_forecast(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: weather_get_forecast
+
+        Get multi-day weather forecast for coordinates.
+
+        Arguments:
+            latitude (float): Latitude in decimal degrees
+            longitude (float): Longitude in decimal degrees
+            periods (int, optional): Number of forecast periods (default: 7, max: 14)
+
+        Returns:
+            {success: bool, location: Dict, forecast: List[Dict], metadata: Dict}
+        """
+        try:
+            latitude = arguments.get('latitude')
+            longitude = arguments.get('longitude')
+
+            if latitude is None or longitude is None:
+                return {
+                    "success": False,
+                    "error": "Missing required arguments: latitude and longitude"
+                }
+
+            periods = arguments.get('periods', 7)
+            periods = max(1, min(periods, 14))  # Cap between 1-14
+
+            client = self.get_weather_client()
+            result = client.get_forecast(latitude=latitude, longitude=longitude, periods=periods)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "location": result.get('location', {}),
+                "forecast": result.get('forecast', []),
+                "metadata": {
+                    "periods": len(result.get('forecast', [])),
+                    "source": "NOAA Weather Service",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in weather_get_forecast: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_weather_get_alerts(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: weather_get_alerts
+
+        Get active weather alerts for a state.
+
+        Arguments:
+            state (str): Two-letter state code (e.g., CA, NY, OR)
+
+        Returns:
+            {success: bool, state: str, alerts: List[Dict], metadata: Dict}
+        """
+        try:
+            state = arguments.get('state')
+            if not state:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: state"
+                }
+
+            # Ensure uppercase
+            state = state.upper()
+
+            client = self.get_weather_client()
+            result = client.get_alerts(state=state)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "state": state,
+                "alerts": result.get('alerts', []),
+                "metadata": {
+                    "alert_count": result.get('count', 0),
+                    "source": "NOAA Weather Service",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in weather_get_alerts: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - YouTube
+    # -------------------------------------------------------------------------
+
+    def tool_youtube_search_videos(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: youtube_search_videos
+
+        Search for videos on YouTube.
+
+        Arguments:
+            query (str): Search query
+            max_results (int, optional): Max results (default: 10, max: 25)
+            order (str, optional): Sort order (relevance, date, rating, title, viewCount)
+            safe_search (str, optional): Safety filter (none, moderate, strict)
+            video_duration (str, optional): Duration filter (any, short, medium, long)
+
+        Returns:
+            {success: bool, videos: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+
+            max_results = min(arguments.get('max_results', 10), 25)
+            order = arguments.get('order', 'relevance')
+            safe_search = arguments.get('safe_search', 'moderate')
+            video_duration = arguments.get('video_duration')
+
+            client = self.get_youtube_client()
+            result = client.search_videos(
+                query=query,
+                max_results=max_results,
+                order=order,
+                safe_search=safe_search,
+                video_duration=video_duration
+            )
+
+            return {
+                "success": True,
+                "videos": result.get('videos', []),
+                "metadata": {
+                    "query": query,
+                    "result_count": result.get('total_results', 0),
+                    "next_page_token": result.get('next_page_token'),
+                    "source": "YouTube Data API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in youtube_search_videos: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_youtube_channel_statistics(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: youtube_channel_statistics
+
+        Fetch statistics and metadata for a YouTube channel.
+
+        Arguments:
+            channel_id (str): YouTube channel ID
+
+        Returns:
+            {success: bool, channel: Dict, metadata: Dict}
+        """
+        try:
+            channel_id = arguments.get('channel_id')
+            if not channel_id:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: channel_id"
+                }
+
+            client = self.get_youtube_client()
+            result = client.get_channel_statistics(channel_id=channel_id)
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "channel": result,
+                "metadata": {
+                    "source": "YouTube Data API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in youtube_channel_statistics: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_youtube_playlist_items(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: youtube_playlist_items
+
+        List items from a YouTube playlist.
+
+        Arguments:
+            playlist_id (str): YouTube playlist ID
+            max_results (int, optional): Max items (default: 25, max: 25)
+
+        Returns:
+            {success: bool, items: List[Dict], metadata: Dict}
+        """
+        try:
+            playlist_id = arguments.get('playlist_id')
+            if not playlist_id:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: playlist_id"
+                }
+
+            max_results = min(arguments.get('max_results', 25), 25)
+
+            client = self.get_youtube_client()
+            result = client.get_playlist_items(
+                playlist_id=playlist_id,
+                max_results=max_results
+            )
+
+            return {
+                "success": True,
+                "items": result.get('items', []),
+                "metadata": {
+                    "playlist_id": playlist_id,
+                    "result_count": result.get('total_results', 0),
+                    "next_page_token": result.get('next_page_token'),
+                    "source": "YouTube Data API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in youtube_playlist_items: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - News
+    # -------------------------------------------------------------------------
+
+    def tool_news_top_headlines(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: news_top_headlines
+
+        Get top news headlines for a country or category.
+
+        Arguments:
+            country (str, optional): ISO country code (default: us)
+            category (str, optional): Category (business, technology, etc.)
+            query (str, optional): Search keywords
+            page_size (int, optional): Max results (default: 20, max: 50)
+
+        Returns:
+            {success: bool, articles: List[Dict], metadata: Dict}
+        """
+        try:
+            country = arguments.get('country', 'us')
+            category = arguments.get('category')
+            query = arguments.get('query')
+            page_size = min(arguments.get('page_size', 20), 50)
+
+            client = self.get_news_client()
+            result = client.get_top_headlines(
+                country=country,
+                category=category,
+                query=query,
+                page_size=page_size
+            )
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "articles": result.get('articles', []),
+                "metadata": {
+                    "total_results": result.get('total_results', 0),
+                    "country": country,
+                    "category": category,
+                    "source": "News API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in news_top_headlines: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_news_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: news_search
+
+        Search news articles across sources.
+
+        Arguments:
+            query (str): Search keywords
+            language (str, optional): Language code (default: en)
+            page_size (int, optional): Max results (default: 20, max: 50)
+            from_date (str, optional): Start date (YYYY-MM-DD)
+            to_date (str, optional): End date (YYYY-MM-DD)
+
+        Returns:
+            {success: bool, articles: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+
+            language = arguments.get('language', 'en')
+            page_size = min(arguments.get('page_size', 20), 50)
+            from_date = arguments.get('from_date')
+            to_date = arguments.get('to_date')
+
+            client = self.get_news_client()
+            result = client.search_everything(
+                query=query,
+                language=language,
+                page_size=page_size,
+                from_date=from_date,
+                to_date=to_date
+            )
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "articles": result.get('articles', []),
+                "metadata": {
+                    "query": query,
+                    "total_results": result.get('total_results', 0),
+                    "language": language,
+                    "source": "News API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in news_search: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    def tool_news_sources(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: news_sources
+
+        List available news sources and metadata.
+
+        Arguments:
+            category (str, optional): Filter by category
+            language (str, optional): Filter by language code
+            country (str, optional): Filter by country code
+
+        Returns:
+            {success: bool, sources: List[Dict], metadata: Dict}
+        """
+        try:
+            category = arguments.get('category')
+            language = arguments.get('language')
+            country = arguments.get('country')
+
+            client = self.get_news_client()
+            result = client.get_sources(
+                category=category,
+                language=language,
+                country=country
+            )
+
+            if "error" in result:
+                return {
+                    "success": False,
+                    "error": result["error"]
+                }
+
+            return {
+                "success": True,
+                "sources": result.get('sources', []),
+                "metadata": {
+                    "count": result.get('count', 0),
+                    "filters": {
+                        "category": category,
+                        "language": language,
+                        "country": country
+                    },
+                    "source": "News API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in news_sources: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
     # MCP Resources
     # -------------------------------------------------------------------------
 
@@ -803,6 +1496,248 @@ class DataServer:
                         }
                     },
                     "required": ["url"]
+                }
+            },
+            # Wikipedia tools
+            {
+                "name": "wikipedia_search",
+                "description": "Search Wikipedia articles by keyword",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search keywords"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Max results (default: 10, max: 25)"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            },
+            {
+                "name": "wikipedia_get_summary",
+                "description": "Get a concise summary of a Wikipedia article",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "Wikipedia article title"
+                        }
+                    },
+                    "required": ["title"]
+                }
+            },
+            {
+                "name": "wikipedia_get_full_content",
+                "description": "Retrieve the full content of a Wikipedia article",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "Wikipedia article title"
+                        }
+                    },
+                    "required": ["title"]
+                }
+            },
+            # Weather tools
+            {
+                "name": "weather_get_current",
+                "description": "Get current weather conditions for coordinates (NOAA)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "latitude": {
+                            "type": "number",
+                            "description": "Latitude in decimal degrees"
+                        },
+                        "longitude": {
+                            "type": "number",
+                            "description": "Longitude in decimal degrees"
+                        }
+                    },
+                    "required": ["latitude", "longitude"]
+                }
+            },
+            {
+                "name": "weather_get_forecast",
+                "description": "Get multi-day weather forecast for coordinates (NOAA)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "latitude": {
+                            "type": "number",
+                            "description": "Latitude in decimal degrees"
+                        },
+                        "longitude": {
+                            "type": "number",
+                            "description": "Longitude in decimal degrees"
+                        },
+                        "periods": {
+                            "type": "integer",
+                            "description": "Number of forecast periods (default: 7, max: 14)"
+                        }
+                    },
+                    "required": ["latitude", "longitude"]
+                }
+            },
+            {
+                "name": "weather_get_alerts",
+                "description": "Get active weather alerts for a state (NOAA)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "state": {
+                            "type": "string",
+                            "description": "Two-letter state code (e.g., CA, NY, OR)"
+                        }
+                    },
+                    "required": ["state"]
+                }
+            },
+            # YouTube tools
+            {
+                "name": "youtube_search_videos",
+                "description": "Search for videos on YouTube",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "max_results": {
+                            "type": "integer",
+                            "description": "Max results (default: 10, max: 25)"
+                        },
+                        "order": {
+                            "type": "string",
+                            "description": "Sort order: relevance, date, rating, title, viewCount (default: relevance)"
+                        },
+                        "safe_search": {
+                            "type": "string",
+                            "description": "Safety filter: none, moderate, strict (default: moderate)"
+                        },
+                        "video_duration": {
+                            "type": "string",
+                            "description": "Duration filter: any, short, medium, long (optional)"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            },
+            {
+                "name": "youtube_channel_statistics",
+                "description": "Fetch statistics and metadata for a YouTube channel",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "channel_id": {
+                            "type": "string",
+                            "description": "YouTube channel ID"
+                        }
+                    },
+                    "required": ["channel_id"]
+                }
+            },
+            {
+                "name": "youtube_playlist_items",
+                "description": "List items from a YouTube playlist",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "playlist_id": {
+                            "type": "string",
+                            "description": "YouTube playlist ID"
+                        },
+                        "max_results": {
+                            "type": "integer",
+                            "description": "Max items (default: 25, max: 25)"
+                        }
+                    },
+                    "required": ["playlist_id"]
+                }
+            },
+            # News tools
+            {
+                "name": "news_top_headlines",
+                "description": "Get top news headlines for a country or category",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "country": {
+                            "type": "string",
+                            "description": "ISO country code (default: us)"
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Category (business, technology, health, etc.)"
+                        },
+                        "query": {
+                            "type": "string",
+                            "description": "Search keywords (optional)"
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Max results (default: 20, max: 50)"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "news_search",
+                "description": "Search news articles across sources",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search keywords"
+                        },
+                        "language": {
+                            "type": "string",
+                            "description": "Language code (default: en)"
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Max results (default: 20, max: 50)"
+                        },
+                        "from_date": {
+                            "type": "string",
+                            "description": "Start date (YYYY-MM-DD format)"
+                        },
+                        "to_date": {
+                            "type": "string",
+                            "description": "End date (YYYY-MM-DD format)"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            },
+            {
+                "name": "news_sources",
+                "description": "List available news sources and metadata",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "category": {
+                            "type": "string",
+                            "description": "Filter by category (optional)"
+                        },
+                        "language": {
+                            "type": "string",
+                            "description": "Filter by language code (optional)"
+                        },
+                        "country": {
+                            "type": "string",
+                            "description": "Filter by country code (optional)"
+                        }
+                    }
                 }
             }
         ]

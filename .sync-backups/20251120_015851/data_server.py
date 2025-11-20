@@ -4,14 +4,14 @@ Data Fetching MCP Server
 Exposes shared.data_fetching capabilities through MCP protocol.
 
 Tools provided:
-- dream_of_census_acs: Fetch American Community Survey data
-- dream_of_census_saipe: Fetch poverty estimates
-- dream_of_census_variables: Search Census variable catalog
-- dream_of_arxiv: Search arXiv papers
-- dream_of_semantic_scholar: Search research papers
-- dream_of_semantic_scholar_paper: Get paper details
-- dream_of_wayback: Search Wayback Machine
-- dream_of_wayback_snapshots: List available snapshots
+- fetch_census_acs: Fetch American Community Survey data
+- fetch_census_saipe: Fetch poverty estimates
+- list_census_variables: Search Census variable catalog
+- search_arxiv: Search arXiv papers
+- search_semantic_scholar: Search research papers
+- get_semantic_scholar_paper: Get paper details
+- wayback_search: Search Wayback Machine
+- wayback_available_snapshots: List available snapshots
 
 Resources provided:
 - census://variables/{table}: Census variable catalog
@@ -19,15 +19,17 @@ Resources provided:
 - archive://snapshot/{url}/{timestamp}: Wayback snapshot metadata
 """
 
+import json
 import logging
-from typing import Dict, List, Optional, Any
+import sys
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 # Import from shared library
-import sys
 sys.path.insert(0, '/home/coolhand/shared')
-from data_fetching import CensusClient, ArxivClient, SemanticScholarClient, ArchiveClient
+
 from config import ConfigManager
+from data_fetching import ArxivClient, ArchiveClient, CensusClient, SemanticScholarClient
 
 logger = logging.getLogger(__name__)
 
@@ -86,9 +88,9 @@ class DataServer:
     # MCP Tools - Census Bureau
     # -------------------------------------------------------------------------
 
-    def tool_dream_of_census_acs(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_fetch_census_acs(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_census_acs
+        MCP Tool: fetch_census_acs
 
         Fetch American Community Survey (ACS) demographic data.
 
@@ -135,15 +137,15 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_census_acs: {e}")
+            logger.exception(f"Error in fetch_census_acs: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_dream_of_census_saipe(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_fetch_census_saipe(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_census_saipe
+        MCP Tool: fetch_census_saipe
 
         Fetch Small Area Income and Poverty Estimates (SAIPE).
 
@@ -185,15 +187,15 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_census_saipe: {e}")
+            logger.exception(f"Error in fetch_census_saipe: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_dream_of_census_variables(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_list_census_variables(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_census_variables
+        MCP Tool: list_census_variables
 
         Search Census variable catalog.
 
@@ -214,7 +216,7 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_census_variables: {e}")
+            logger.exception(f"Error in list_census_variables: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -224,9 +226,9 @@ class DataServer:
     # MCP Tools - arXiv
     # -------------------------------------------------------------------------
 
-    def tool_dream_of_arxiv(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_search_arxiv(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_arxiv
+        MCP Tool: search_arxiv
 
         Search arXiv for academic papers.
 
@@ -276,7 +278,7 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_arxiv: {e}")
+            logger.exception(f"Error in search_arxiv: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -286,9 +288,9 @@ class DataServer:
     # MCP Tools - Semantic Scholar
     # -------------------------------------------------------------------------
 
-    def tool_dream_of_semantic_scholar(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_search_semantic_scholar(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_semantic_scholar
+        MCP Tool: search_semantic_scholar
 
         Search Semantic Scholar for research papers.
 
@@ -331,15 +333,15 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_semantic_scholar: {e}")
+            logger.exception(f"Error in search_semantic_scholar: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_dream_of_semantic_scholar_paper(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_get_semantic_scholar_paper(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_semantic_scholar_paper
+        MCP Tool: get_semantic_scholar_paper
 
         Get detailed information about a specific paper.
 
@@ -377,7 +379,7 @@ class DataServer:
                 }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_semantic_scholar_paper: {e}")
+            logger.exception(f"Error in get_semantic_scholar_paper: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -387,9 +389,9 @@ class DataServer:
     # MCP Tools - Internet Archive / Wayback Machine
     # -------------------------------------------------------------------------
 
-    def tool_dream_of_wayback(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_wayback_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_wayback
+        MCP Tool: wayback_search
 
         Get the most recent archived snapshot of a URL.
 
@@ -430,15 +432,15 @@ class DataServer:
                 }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_wayback: {e}")
+            logger.exception(f"Error in wayback_search: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_dream_of_wayback_snapshots(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_wayback_available_snapshots(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: dream_of_wayback_snapshots
+        MCP Tool: wayback_available_snapshots
 
         List all available snapshots for a URL.
 
@@ -484,7 +486,7 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in dream_of_wayback_snapshots: {e}")
+            logger.exception(f"Error in wayback_available_snapshots: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -589,7 +591,7 @@ class DataServer:
             # Parse URI: archive://snapshot/{url}/{timestamp}
             parts = uri.replace('archive://snapshot/', '').split('/')
             url = parts[0]
-            parts[1] if len(parts) > 1 else None
+            timestamp = parts[1] if len(parts) > 1 else None
 
             client = self.get_archive_client()
 
@@ -632,7 +634,7 @@ class DataServer:
         return [
             # Census tools
             {
-                "name": "dream_of_census_acs",
+                "name": "fetch_census_acs",
                 "description": "Fetch American Community Survey (ACS) demographic data",
                 "inputSchema": {
                     "type": "object",
@@ -658,7 +660,7 @@ class DataServer:
                 }
             },
             {
-                "name": "dream_of_census_saipe",
+                "name": "fetch_census_saipe",
                 "description": "Fetch Small Area Income and Poverty Estimates",
                 "inputSchema": {
                     "type": "object",
@@ -680,7 +682,7 @@ class DataServer:
                 }
             },
             {
-                "name": "dream_of_census_variables",
+                "name": "list_census_variables",
                 "description": "Search Census variable catalog",
                 "inputSchema": {
                     "type": "object",
@@ -698,7 +700,7 @@ class DataServer:
             },
             # arXiv tools
             {
-                "name": "dream_of_arxiv",
+                "name": "search_arxiv",
                 "description": "Search arXiv for academic papers",
                 "inputSchema": {
                     "type": "object",
@@ -725,7 +727,7 @@ class DataServer:
             },
             # Semantic Scholar tools
             {
-                "name": "dream_of_semantic_scholar",
+                "name": "search_semantic_scholar",
                 "description": "Search Semantic Scholar for research papers",
                 "inputSchema": {
                     "type": "object",
@@ -748,7 +750,7 @@ class DataServer:
                 }
             },
             {
-                "name": "dream_of_semantic_scholar_paper",
+                "name": "get_semantic_scholar_paper",
                 "description": "Get detailed information about a specific paper",
                 "inputSchema": {
                     "type": "object",
@@ -768,7 +770,7 @@ class DataServer:
             },
             # Wayback Machine tools
             {
-                "name": "dream_of_wayback",
+                "name": "wayback_search",
                 "description": "Get the most recent archived snapshot of a URL",
                 "inputSchema": {
                     "type": "object",
@@ -786,7 +788,7 @@ class DataServer:
                 }
             },
             {
-                "name": "dream_of_wayback_snapshots",
+                "name": "wayback_available_snapshots",
                 "description": "List all available snapshots for a URL",
                 "inputSchema": {
                     "type": "object",
