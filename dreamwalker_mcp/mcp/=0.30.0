@@ -1,0 +1,8 @@
+Collecting uvicorn
+  Downloading uvicorn-0.38.0-py3-none-any.whl.metadata (6.8 kB)
+Requirement already satisfied: click>=7.0 in ./venv/lib/python3.10/site-packages (from uvicorn) (8.1.8)
+Requirement already satisfied: h11>=0.8 in ./venv/lib/python3.10/site-packages (from uvicorn) (0.16.0)
+Requirement already satisfied: typing-extensions>=4.0 in ./venv/lib/python3.10/site-packages (from uvicorn) (4.15.0)
+Downloading uvicorn-0.38.0-py3-none-any.whl (68 kB)
+Installing collected packages: uvicorn
+Successfully installed uvicorn-0.38.0

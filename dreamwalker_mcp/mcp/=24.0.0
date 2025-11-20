@@ -1,0 +1,4 @@
+Requirement already satisfied: gevent in ./venv/lib/python3.10/site-packages (25.9.1)
+Requirement already satisfied: greenlet>=3.2.2 in ./venv/lib/python3.10/site-packages (from gevent) (3.2.4)
+Requirement already satisfied: zope.event in ./venv/lib/python3.10/site-packages (from gevent) (6.1)
+Requirement already satisfied: zope.interface in ./venv/lib/python3.10/site-packages (from gevent) (8.1.1)

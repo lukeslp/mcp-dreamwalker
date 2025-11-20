@@ -1,0 +1,30 @@
+# Include documentation
+include README.md
+include LICENSE
+include .env.example
+
+# Include plugin configuration
+include .claude-plugin/plugin.json
+include .mcp.json
+
+# Include requirements files
+include requirements.txt
+include requirements-all.txt
+
+# Include all Python files
+recursive-include dreamwalker_mcp *.py
+
+# Include documentation files
+recursive-include dreamwalker_mcp *.md
+recursive-include dreamwalker_mcp *.yaml
+recursive-include dreamwalker_mcp *.json
+
+# Include templates and static files
+recursive-include dreamwalker_mcp *.html
+recursive-include dreamwalker_mcp *.css
+recursive-include dreamwalker_mcp *.js
+
+# Exclude cache and build files
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude .DS_Store

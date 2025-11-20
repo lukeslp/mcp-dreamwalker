@@ -1,0 +1,147 @@
+{
+  "name": "dreamwalker-mcp",
+  "version": "1.0.0",
+  "displayName": "Dreamwalker MCP",
+  "description": "Multi-agent orchestration and LLM provider abstraction via MCP protocol. Includes Beltalowda hierarchical research, Swarm multi-agent search, 9 LLM providers, 29+ tool modules, and data fetching utilities.",
+  "author": "Luke Steuber",
+  "license": "MIT",
+  "homepage": "https://github.com/yourusername/dreamwalker-mcp",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/dreamwalker-mcp"
+  },
+  "keywords": [
+    "mcp",
+    "orchestration",
+    "multi-agent",
+    "llm",
+    "anthropic",
+    "openai",
+    "xai",
+    "beltalowda",
+    "swarm",
+    "research",
+    "data-fetching"
+  ],
+  "categories": [
+    "ai-tools",
+    "orchestration",
+    "data-access"
+  ],
+  "icon": "🌊",
+  "mcpServers": [
+    {
+      "id": "unified",
+      "name": "Unified Orchestrator",
+      "description": "Beltalowda & Swarm multi-agent orchestration with streaming support"
+    },
+    {
+      "id": "providers",
+      "name": "LLM Providers",
+      "description": "9 LLM providers (Anthropic, OpenAI, xAI, Mistral, Cohere, Gemini, etc.)"
+    },
+    {
+      "id": "data",
+      "name": "Data Fetching",
+      "description": "Wikipedia, YouTube, Finance, Weather, GitHub, NASA, News, OpenLibrary clients"
+    },
+    {
+      "id": "cache",
+      "name": "Cache Manager",
+      "description": "Redis-based caching and state management"
+    },
+    {
+      "id": "utility",
+      "name": "Utilities",
+      "description": "ArXiv search, text-to-speech, citation management, Semantic Scholar"
+    },
+    {
+      "id": "web_search",
+      "name": "Web Search",
+      "description": "Web search capabilities with multiple search engines"
+    }
+  ],
+  "requirements": {
+    "python": ">=3.8",
+    "packages": [
+      "python-dotenv>=1.0.0",
+      "requests>=2.31.0",
+      "aiohttp>=3.9.0"
+    ]
+  },
+  "optionalDependencies": {
+    "anthropic": "anthropic>=0.18.0",
+    "openai": "openai>=1.0.0",
+    "mistral": "requests>=2.31.0",
+    "cohere": "cohere>=5.0.0",
+    "gemini": "google-generativeai>=0.3.0",
+    "redis": "redis>=5.0.0",
+    "arxiv": "arxiv>=2.0.0",
+    "tts": "gtts>=2.5.0"
+  },
+  "configurationSchema": {
+    "type": "object",
+    "properties": {
+      "anthropic_api_key": {
+        "type": "string",
+        "description": "Anthropic API key for Claude models",
+        "secret": true
+      },
+      "openai_api_key": {
+        "type": "string",
+        "description": "OpenAI API key for GPT models",
+        "secret": true
+      },
+      "xai_api_key": {
+        "type": "string",
+        "description": "xAI API key for Grok models",
+        "secret": true
+      },
+      "mistral_api_key": {
+        "type": "string",
+        "description": "Mistral API key",
+        "secret": true
+      },
+      "cohere_api_key": {
+        "type": "string",
+        "description": "Cohere API key",
+        "secret": true
+      },
+      "gemini_api_key": {
+        "type": "string",
+        "description": "Google Gemini API key",
+        "secret": true
+      },
+      "perplexity_api_key": {
+        "type": "string",
+        "description": "Perplexity API key",
+        "secret": true
+      },
+      "groq_api_key": {
+        "type": "string",
+        "description": "Groq API key",
+        "secret": true
+      },
+      "huggingface_api_key": {
+        "type": "string",
+        "description": "HuggingFace API key",
+        "secret": true
+      },
+      "redis_host": {
+        "type": "string",
+        "description": "Redis host for caching",
+        "default": "localhost"
+      },
+      "redis_port": {
+        "type": "integer",
+        "description": "Redis port",
+        "default": 6379
+      },
+      "census_api_key": {
+        "type": "string",
+        "description": "US Census Bureau API key",
+        "secret": true
+      }
+    }
+  }
+}
