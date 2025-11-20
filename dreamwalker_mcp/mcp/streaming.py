@@ -16,8 +16,8 @@ import logging
 import hmac
 import hashlib
 import time
-from typing import Dict, Optional, Callable, Any, AsyncIterator
-from datetime import datetime, timedelta
+from typing import Dict, Optional, Any, AsyncIterator
+from datetime import datetime
 from collections import defaultdict
 import aiohttp
 

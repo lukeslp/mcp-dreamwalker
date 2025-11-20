@@ -14,19 +14,17 @@ Resources provided:
 - utils://citation_styles: Available citation styles
 """
 
-import json
 import logging
-import sys
+from typing import Dict, List, Optional, Any
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 # Import from shared library
+import sys
 sys.path.insert(0, '/home/coolhand/shared')
-
-from config import ConfigManager
-from utils.citation import Citation, CitationManager
-from utils.document_parsers import get_supported_extensions, is_supported_file, parse_file
+from utils.document_parsers import parse_file, is_supported_file, get_supported_extensions
 from utils.multi_search import MultiSearchOrchestrator
+from utils.citation import Citation, CitationManager
+from config import ConfigManager
 
 logger = logging.getLogger(__name__)
 

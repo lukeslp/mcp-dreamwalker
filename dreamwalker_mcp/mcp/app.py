@@ -30,9 +30,6 @@ Routes:
     POST /tools/list_registered_tools
     POST /tools/execute_registered_tool
 
-    # Web Search Tools (POST with JSON body)
-    POST /tools/web_search              - Search web via SerpAPI/Tavily/Brave
-
     # Streaming
     GET  /stream/{task_id}          - SSE stream for workflow progress
     POST /webhook/register          - Register webhook for task
@@ -42,32 +39,29 @@ Routes:
 Author: Luke Steuber
 """
 
-import atexit
-import json
-import logging
 import os
-import signal
 import sys
-from datetime import datetime
+import logging
+import signal
+import json
+import atexit
 from pathlib import Path
-
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 # Add shared to path
 sys.path.insert(0, '/home/coolhand/shared')
 
-from mcp import (
+from dreamwalker_mcp.mcp import (
     UnifiedMCPServer,
+    register_streaming_routes,
     get_streaming_bridge,
-    get_webhook_manager,
-    register_streaming_routes
+    get_webhook_manager
 )
-from mcp.background_loop import get_background_loop
-from mcp.cache_server import CacheServer
-from mcp.data_server import DataServer
-from mcp.utility_server import UtilityServer
-from mcp.web_search_server import WebSearchServer
+from dreamwalker_mcp.mcp.data_server import DataServer
+from dreamwalker_mcp.mcp.cache_server import CacheServer
+from dreamwalker_mcp.mcp.utility_server import UtilityServer
+from dreamwalker_mcp.mcp.background_loop import get_background_loop
 
 # Configure logging
 logging.basicConfig(
@@ -98,7 +92,6 @@ mcp_server = UnifiedMCPServer()
 data_server = DataServer()
 cache_server = CacheServer()
 utility_server = UtilityServer()
-web_search_server = WebSearchServer()
 
 # Restore workflow state if backup exists
 STATE_FILE = Path("/home/coolhand/shared/mcp/state_backup.json")
@@ -123,7 +116,6 @@ logger.info("Dreamwalker MCP Server initialized")
 logger.info("Data Fetching Server initialized (Census, arXiv, Semantic Scholar, Archive)")
 logger.info("Cache Server initialized (Redis)")
 logger.info("Utility Server initialized (Document parsing, Multi-search, Citations)")
-logger.info("Web Search Server initialized (SerpAPI, Tavily, Brave)")
 
 
 # -------------------------------------------------------------------------
@@ -157,13 +149,12 @@ def health():
     """Health check endpoint."""
     streaming_bridge = get_streaming_bridge()
     webhook_manager = get_webhook_manager()
-    
+
     all_tools = []
     all_tools.extend(mcp_server.get_tools_manifest())
     all_tools.extend(data_server.get_tools_manifest())
     all_tools.extend(cache_server.get_tools_manifest())
     all_tools.extend(utility_server.get_tools_manifest())
-    all_tools.extend(web_search_server.get_tools_manifest())
 
     return jsonify({
         'status': 'healthy',
@@ -173,8 +164,7 @@ def health():
             'orchestration': 'active',
             'data_fetching': 'active',
             'cache': 'active',
-            'utilities': 'active',
-            'web_search': 'active'
+            'utilities': 'active'
         },
         'tool_count': len(all_tools),
         'active_streams': streaming_bridge.get_stats()['active_streams'],
@@ -194,7 +184,6 @@ def list_tools():
     tools.extend(data_server.get_tools_manifest())
     tools.extend(cache_server.get_tools_manifest())
     tools.extend(utility_server.get_tools_manifest())
-    tools.extend(web_search_server.get_tools_manifest())
     return jsonify({
         'tools': tools,
         'count': len(tools)
@@ -209,7 +198,6 @@ def list_resources():
     resources.extend(data_server.get_resources_manifest())
     resources.extend(cache_server.get_resources_manifest())
     resources.extend(utility_server.get_resources_manifest())
-    resources.extend(web_search_server.get_resources_manifest())
     return jsonify({
         'resources': resources,
         'count': len(resources)
@@ -233,7 +221,7 @@ def orchestrate_research():
 
         # Run async function in background loop
         result = background_loop.run_sync(
-            mcp_server.tool_orchestrate_research(data),
+            mcp_server.tool_dream_orchestrate_research(data),
             timeout=10.0  # Just wait for the task to be created, not completed
         )
         return jsonify(result)
@@ -259,7 +247,7 @@ def orchestrate_search():
 
         # Run async function in background loop
         result = background_loop.run_sync(
-            mcp_server.tool_orchestrate_search(data),
+            mcp_server.tool_dream_orchestrate_search(data),
             timeout=10.0  # Just wait for the task to be created, not completed
         )
         return jsonify(result)
@@ -278,7 +266,7 @@ def get_orchestration_status():
     try:
         data = request.get_json()
         result = background_loop.run_sync(
-            mcp_server.tool_get_orchestration_status(data),
+            mcp_server.tool_dream_get_orchestration_status(data),
             timeout=5.0
         )
         return jsonify(result)
@@ -293,7 +281,7 @@ def cancel_orchestration():
     try:
         data = request.get_json()
         result = background_loop.run_sync(
-            mcp_server.tool_cancel_orchestration(data),
+            mcp_server.tool_dream_cancel_orchestration(data),
             timeout=5.0
         )
         return jsonify(result)
@@ -307,7 +295,7 @@ def list_orchestrator_patterns():
     """List available orchestrator patterns."""
     try:
         result = background_loop.run_sync(
-            mcp_server.tool_list_orchestrator_patterns({}),
+            mcp_server.tool_dream_list_orchestrator_patterns({}),
             timeout=5.0
         )
         return jsonify(result)
@@ -322,7 +310,7 @@ def list_registered_tools():
     try:
         data = request.get_json() if request.method == 'POST' else {}
         result = background_loop.run_sync(
-            mcp_server.tool_list_registered_tools(data),
+            mcp_server.tool_dream_list_registered_tools(data),
             timeout=5.0
         )
         return jsonify(result)
@@ -337,7 +325,7 @@ def execute_registered_tool():
     try:
         data = request.get_json()
         result = background_loop.run_sync(
-            mcp_server.tool_execute_registered_tool(data),
+            mcp_server.tool_dream_execute_registered_tool(data),
             timeout=10.0
         )
         return jsonify(result)
@@ -443,28 +431,6 @@ def wayback_available_snapshots():
         return jsonify(result)
     except Exception as e:
         logger.exception(f"Error in wayback_available_snapshots: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-# -------------------------------------------------------------------------
-# Web Search Tool Endpoints
-# -------------------------------------------------------------------------
-
-@app.route('/tools/web_search', methods=['POST'])
-def web_search():
-    """Search the web using SerpAPI, Tavily, or Brave."""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'Request body must be valid JSON'
-            }), 400
-
-        result = web_search_server.tool_web_search(data)
-        return jsonify(result)
-    except Exception as e:
-        logger.exception(f"Error in web_search: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
@@ -660,6 +626,8 @@ def save_state_on_shutdown():
         logger.error("Failed to save state: %s", e)
 
 # Register shutdown handler
+
+
 def signal_handler(sig, frame):
     """Handle shutdown signals gracefully."""
     logger.info(f"Received signal {sig}, shutting down gracefully...")
@@ -680,7 +648,6 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5060))
 
     # Start cleanup loop for streaming bridge
-    import asyncio
     streaming_bridge = get_streaming_bridge()
 
     logger.info(f"Starting Dreamwalker MCP Server on port {port}")

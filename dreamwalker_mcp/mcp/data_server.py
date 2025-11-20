@@ -19,17 +19,15 @@ Resources provided:
 - archive://snapshot/{url}/{timestamp}: Wayback snapshot metadata
 """
 
-import json
 import logging
-import sys
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 # Import from shared library
+import sys
 sys.path.insert(0, '/home/coolhand/shared')
-
+from data_fetching import CensusClient, ArxivClient, SemanticScholarClient, ArchiveClient
 from config import ConfigManager
-from data_fetching import ArxivClient, ArchiveClient, CensusClient, SemanticScholarClient
 
 logger = logging.getLogger(__name__)
 
@@ -591,7 +589,7 @@ class DataServer:
             # Parse URI: archive://snapshot/{url}/{timestamp}
             parts = uri.replace('archive://snapshot/', '').split('/')
             url = parts[0]
-            timestamp = parts[1] if len(parts) > 1 else None
+            parts[1] if len(parts) > 1 else None
 
             client = self.get_archive_client()
 

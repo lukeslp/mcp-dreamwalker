@@ -24,16 +24,14 @@ Streaming:
 Author: Luke Steuber
 """
 
-import asyncio
-import json
 import logging
-import sys
-import uuid
+from typing import Dict, List, Optional, Any, Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+import uuid
 
 # Import from shared library
+import sys
 sys.path.insert(0, '/home/coolhand/shared')
 
 # Import background loop for persistent async execution
@@ -50,11 +48,10 @@ from orchestration import (
     AgentResult,
     SynthesisResult,
     AgentType,
-    StreamEvent,
-    EventType
+    StreamEvent
 )
-from mcp.streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
-from mcp.tool_registry import ToolRegistry, get_tool_registry
+from dreamwalker_mcp.mcp.streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
+from dreamwalker_mcp.mcp.tool_registry import ToolRegistry, get_tool_registry
 from llm_providers.factory import ProviderFactory
 from config import ConfigManager
 
@@ -71,7 +68,7 @@ class WorkflowState:
 
     Tracks active orchestrations, results, and provides cleanup.
     """
-    
+
     MAX_ACTIVE_WORKFLOWS = 50  # Prevent unbounded growth
 
     def __init__(self):
@@ -99,7 +96,7 @@ class WorkflowState:
 
         Returns:
             Workflow info dict
-            
+
         Raises:
             ValueError: If maximum active workflows exceeded
         """
@@ -109,7 +106,7 @@ class WorkflowState:
                 f"Maximum active workflows ({self.MAX_ACTIVE_WORKFLOWS}) exceeded. "
                 f"Please wait for existing workflows to complete or cancel them."
             )
-        
+
         workflow_info = {
             'task_id': task_id,
             'orchestrator_type': orchestrator_type,
@@ -160,7 +157,7 @@ class WorkflowState:
             result: Orchestrator result
         """
         logger.info(f"Completing workflow {task_id} with status {result.status}")
-        
+
         # Set completion timestamp before storing
         if task_id in self.active_workflows:
             completion_time = datetime.utcnow().isoformat()
@@ -171,7 +168,7 @@ class WorkflowState:
 
         # Ensure result stores completion timestamp
         result.completed_at = completion_time
-        
+
         # Store result
         self.completed_workflows[task_id] = result
         logger.info(f"Workflow {task_id} marked as completed. Active workflows: {len(self.active_workflows)}, Completed: {len(self.completed_workflows)}")
@@ -534,7 +531,7 @@ class UnifiedMCPServer:
     # MCP Tools
     # -------------------------------------------------------------------------
 
-    async def tool_orchestrate_research(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_orchestrate_research(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: orchestrate_research
 
@@ -616,7 +613,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_orchestrate_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_orchestrate_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: orchestrate_search
 
@@ -696,7 +693,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_get_orchestration_status(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_get_orchestration_status(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: get_orchestration_status
 
@@ -760,7 +757,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_cancel_orchestration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_cancel_orchestration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: cancel_orchestration
 
@@ -799,7 +796,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_list_orchestrator_patterns(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_list_orchestrator_patterns(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: list_orchestrator_patterns
 
@@ -814,8 +811,8 @@ class UnifiedMCPServer:
         try:
             patterns = [
                 {
-                    'name': 'beltalowda',
-                    'display_name': 'Beltalowda Hierarchical Research',
+                    'name': 'dreamer-beltalowda',
+                    'display_name': 'Dreamer Beltalowda Hierarchical Research',
                     'description': 'Multi-tier research with Belters (workers), Drummers (mid-synthesis), and Camina (executive synthesis)',
                     'use_cases': [
                         'Comprehensive research tasks',
@@ -826,8 +823,8 @@ class UnifiedMCPServer:
                     'default_config': BeltalowdaConfig().to_dict()
                 },
                 {
-                    'name': 'swarm',
-                    'display_name': 'Swarm Multi-Agent Search',
+                    'name': 'dreamer-swarm',
+                    'display_name': 'Dreamer Swarm Multi-Agent Search',
                     'description': 'Specialized agents for different search domains (text, image, video, news, academic, etc.)',
                     'use_cases': [
                         'Multi-source information gathering',
@@ -855,7 +852,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_list_registered_tools(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_list_registered_tools(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: list_registered_tools
 
@@ -887,7 +884,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_execute_registered_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_execute_registered_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: execute_registered_tool
 
@@ -1064,7 +1061,7 @@ class UnifiedMCPServer:
         """
         return [
             {
-                "name": "orchestrate_research",
+                "name": "dream_orchestrate_research",
                 "description": "Execute Beltalowda hierarchical research workflow with multi-tier synthesis",
                 "inputSchema": {
                     "type": "object",
@@ -1115,7 +1112,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "orchestrate_search",
+                "name": "dream_orchestrate_search",
                 "description": "Execute Swarm multi-agent search workflow with specialized agent types",
                 "inputSchema": {
                     "type": "object",
@@ -1163,7 +1160,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "get_orchestration_status",
+                "name": "dream_get_orchestration_status",
                 "description": "Get status of a running or completed orchestration",
                 "inputSchema": {
                     "type": "object",
@@ -1177,7 +1174,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "cancel_orchestration",
+                "name": "dream_cancel_orchestration",
                 "description": "Cancel a running orchestration",
                 "inputSchema": {
                     "type": "object",
@@ -1191,7 +1188,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "list_orchestrator_patterns",
+                "name": "dream_list_orchestrator_patterns",
                 "description": "List available orchestrator patterns (Beltalowda, Swarm, etc.)",
                 "inputSchema": {
                     "type": "object",
@@ -1199,7 +1196,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "list_registered_tools",
+                "name": "dream_list_registered_tools",
                 "description": "List tools registered in the tool registry",
                 "inputSchema": {
                     "type": "object",
@@ -1217,7 +1214,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "execute_registered_tool",
+                "name": "dream_execute_registered_tool",
                 "description": "Execute a tool registered in the tool registry",
                 "inputSchema": {
                     "type": "object",

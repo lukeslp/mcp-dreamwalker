@@ -20,7 +20,7 @@ Author: Luke Steuber
 import json
 import logging
 from flask import Blueprint, Response, stream_with_context, request, jsonify
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 
 from .streaming import get_streaming_bridge, get_webhook_manager
 
@@ -303,7 +303,6 @@ if __name__ == '__main__':
     Run with: python -m shared.mcp.streaming_endpoint
     """
     from flask import Flask
-    import asyncio
 
     app = Flask(__name__)
     register_streaming_routes(app, url_prefix='/mcp')

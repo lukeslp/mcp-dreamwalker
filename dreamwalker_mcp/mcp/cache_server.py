@@ -17,17 +17,15 @@ Resources provided:
 - cache://keys/{namespace}: List keys in namespace
 """
 
-import json
 import logging
-import sys
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 # Import from shared library
+import sys
 sys.path.insert(0, '/home/coolhand/shared')
-
-from config import ConfigManager
 from memory import RedisManager
+from config import ConfigManager
 
 logger = logging.getLogger(__name__)
 
