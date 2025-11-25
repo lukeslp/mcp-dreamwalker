@@ -38,7 +38,33 @@ async def handle_mcp_request(server: UnifiedMCPServer, request: Dict[str, Any]) 
     params = request.get('params', {})
 
     try:
-        if method == 'tools/list':
+        if method == 'initialize':
+            # Handle MCP initialization handshake
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get('id'),
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {},
+                        "resources": {}
+                    },
+                    "serverInfo": {
+                        "name": "dreamwalker-unified",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+        
+        elif method == 'initialized':
+            # Client confirms initialization complete
+            return {
+                "jsonrpc": "2.0", 
+                "id": request.get('id'),
+                "result": {}
+            }
+        
+        elif method == 'tools/list':
             return {
                 "jsonrpc": "2.0",
                 "id": request.get('id'),
@@ -49,15 +75,32 @@ async def handle_mcp_request(server: UnifiedMCPServer, request: Dict[str, Any]) 
             tool_name = params.get('name')
             arguments = params.get('arguments', {})
 
-            # Map tool calls to server methods
+            # Map tool calls to server methods (both new and legacy names)
             tool_method_map = {
-                'orchestrate_research': server.tool_orchestrate_research,
-                'orchestrate_search': server.tool_orchestrate_search,
-                'get_orchestration_status': server.tool_get_orchestration_status,
-                'cancel_orchestration': server.tool_cancel_orchestration,
-                'list_orchestrator_patterns': server.tool_list_orchestrator_patterns,
-                'list_registered_tools': server.tool_list_registered_tools,
-                'execute_registered_tool': server.tool_execute_registered_tool,
+                # New names (dreamwalker.type.name pattern)
+                'dreamwalker.orchestrate.cascade': server.tool_dream_orchestrate_research,
+                'dreamwalker.orchestrate.swarm': server.tool_dream_orchestrate_search,
+                'dreamwalker.utility.status': server.tool_dreamwalker_status,
+                'dreamwalker.utility.cancel': server.tool_dreamwalker_cancel,
+                'dreamwalker.utility.patterns': server.tool_dreamwalker_patterns,
+                'dreamwalker.utility.registry.list': server.tool_dreamwalker_list_tools,
+                'dreamwalker.utility.registry.execute': server.tool_dreamwalker_execute_tool,
+                # Legacy names for backward compatibility
+                'dream_orchestrate_research': server.tool_dream_orchestrate_research,
+                'dream_orchestrate_search': server.tool_dream_orchestrate_search,
+                'dreamwalker_status': server.tool_dreamwalker_status,
+                'dreamwalker_cancel': server.tool_dreamwalker_cancel,
+                'dreamwalker_patterns': server.tool_dreamwalker_patterns,
+                'dreamwalker_list_tools': server.tool_dreamwalker_list_tools,
+                'dreamwalker_execute_tool': server.tool_dreamwalker_execute_tool,
+                # Old stdio names
+                'orchestrate_research': server.tool_dream_orchestrate_research,
+                'orchestrate_search': server.tool_dream_orchestrate_search,
+                'get_orchestration_status': server.tool_dreamwalker_status,
+                'cancel_orchestration': server.tool_dreamwalker_cancel,
+                'list_orchestrator_patterns': server.tool_dreamwalker_patterns,
+                'list_registered_tools': server.tool_dreamwalker_list_tools,
+                'execute_registered_tool': server.tool_dreamwalker_execute_tool,
             }
 
             if tool_name in tool_method_map:
@@ -84,13 +127,27 @@ async def handle_mcp_request(server: UnifiedMCPServer, request: Dict[str, Any]) 
         elif method == 'resources/read':
             uri = params.get('uri')
 
-            # Route to appropriate resource handler
-            if uri.startswith('orchestrator://') and uri.endswith('/info'):
-                result = await server.resource_orchestrator_info(uri)
-            elif uri.startswith('orchestrator://') and '/status' in uri:
-                result = await server.resource_workflow_status(uri)
-            elif uri.startswith('orchestrator://') and '/results' in uri:
-                result = await server.resource_workflow_results(uri)
+            # Support both new and legacy URI formats
+            if uri.startswith('orchestrator://'):
+                # Legacy format - still support it
+                if uri.endswith('/info'):
+                    result = await server.resource_orchestrator_info(uri)
+                elif '/status' in uri:
+                    result = await server.resource_workflow_status(uri)
+                elif '/results' in uri:
+                    result = await server.resource_workflow_results(uri)
+                else:
+                    result = {"uri": uri, "error": "Unknown resource"}
+            elif uri.startswith('dreamwalker://'):
+                # New format
+                if uri.endswith('/info'):
+                    result = await server.resource_orchestrator_info(uri)
+                elif '/status' in uri:
+                    result = await server.resource_workflow_status(uri)
+                elif '/results' in uri:
+                    result = await server.resource_workflow_results(uri)
+                else:
+                    result = {"uri": uri, "error": "Unknown resource"}
             else:
                 result = {"uri": uri, "error": "Unknown resource"}
 

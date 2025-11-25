@@ -38,7 +38,33 @@ def handle_mcp_request(server: ProvidersServer, request: Dict[str, Any]) -> Dict
     params = request.get('params', {})
 
     try:
-        if method == 'tools/list':
+        if method == 'initialize':
+            # Handle MCP initialization handshake
+            return {
+                "jsonrpc": "2.0",
+                "id": request.get('id'),
+                "result": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {
+                        "tools": {},
+                        "resources": {}
+                    },
+                    "serverInfo": {
+                        "name": "dreamwalker-providers",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+        
+        elif method == 'initialized':
+            # Client confirms initialization complete
+            return {
+                "jsonrpc": "2.0", 
+                "id": request.get('id'),
+                "result": {}
+            }
+        
+        elif method == 'tools/list':
             return {
                 "jsonrpc": "2.0",
                 "id": request.get('id'),
