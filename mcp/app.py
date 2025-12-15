@@ -233,7 +233,7 @@ def orchestrate_research():
 
         # Run async function in background loop
         result = background_loop.run_sync(
-            mcp_server.tool_orchestrate_research(data),
+            mcp_server.tool_dream_orchestrate_research(data),
             timeout=10.0  # Just wait for the task to be created, not completed
         )
         return jsonify(result)
@@ -259,7 +259,7 @@ def orchestrate_search():
 
         # Run async function in background loop
         result = background_loop.run_sync(
-            mcp_server.tool_orchestrate_search(data),
+            mcp_server.tool_dream_orchestrate_search(data),
             timeout=10.0  # Just wait for the task to be created, not completed
         )
         return jsonify(result)
@@ -278,7 +278,7 @@ def get_orchestration_status():
     try:
         data = request.get_json()
         result = background_loop.run_sync(
-            mcp_server.tool_get_orchestration_status(data),
+            mcp_server.tool_dreamwalker_status(data),
             timeout=5.0
         )
         return jsonify(result)
@@ -293,7 +293,7 @@ def cancel_orchestration():
     try:
         data = request.get_json()
         result = background_loop.run_sync(
-            mcp_server.tool_cancel_orchestration(data),
+            mcp_server.tool_dreamwalker_cancel(data),
             timeout=5.0
         )
         return jsonify(result)
@@ -307,7 +307,7 @@ def list_orchestrator_patterns():
     """List available orchestrator patterns."""
     try:
         result = background_loop.run_sync(
-            mcp_server.tool_list_orchestrator_patterns({}),
+            mcp_server.tool_dreamwalker_patterns({}),
             timeout=5.0
         )
         return jsonify(result)
@@ -322,7 +322,7 @@ def list_registered_tools():
     try:
         data = request.get_json() if request.method == 'POST' else {}
         result = background_loop.run_sync(
-            mcp_server.tool_list_registered_tools(data),
+            mcp_server.tool_dreamwalker_list_tools(data),
             timeout=5.0
         )
         return jsonify(result)
@@ -337,7 +337,7 @@ def execute_registered_tool():
     try:
         data = request.get_json()
         result = background_loop.run_sync(
-            mcp_server.tool_execute_registered_tool(data),
+            mcp_server.tool_dreamwalker_execute_tool(data),
             timeout=10.0
         )
         return jsonify(result)

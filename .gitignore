@@ -71,3 +71,4 @@ reports/
 # Backup files
 *.backup
 *.bak
+.sync-backups/

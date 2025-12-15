@@ -5,18 +5,18 @@ Comprehensive MCP server exposing orchestrator agents for long-running workflows
 Integrates with streaming infrastructure (SSE, webhooks) and state management.
 
 Tools provided:
-- dream_research: Execute Dream Cascade hierarchical research workflow
-- dream_search: Execute Dream Swarm multi-agent search workflow
-- dreamwalker_status: Check workflow status
-- dreamwalker_cancel: Cancel running workflow
-- dreamwalker_patterns: List available orchestrator patterns
-- dreamwalker_list_tools: List registered tools
-- dreamwalker_execute_tool: Execute a registered tool
+- dreamwalker.orchestrate.cascade: Execute Dream Cascade hierarchical research workflow
+- dreamwalker.orchestrate.swarm: Execute Dream Swarm multi-agent search workflow
+- dreamwalker.utility.status: Check workflow status
+- dreamwalker.utility.cancel: Cancel running workflow
+- dreamwalker.utility.patterns: List available orchestrator patterns
+- dreamwalker.utility.registry.list: List registered tools
+- dreamwalker.utility.registry.execute: Execute a registered tool
 
 Resources provided:
-- orchestrator://{pattern}/info: Orchestrator metadata
-- orchestrator://{task_id}/status: Workflow status
-- orchestrator://{task_id}/results: Workflow results
+- dreamwalker://orchestrator.{pattern}/info: Orchestrator metadata
+- dreamwalker://{task_id}/status: Workflow status
+- dreamwalker://{task_id}/results: Workflow results
 
 Streaming:
 - SSE endpoint: /stream/{task_id}
@@ -36,13 +36,26 @@ import sys
 sys.path.insert(0, '/home/coolhand/shared')
 
 # Import background loop for persistent async execution
-from .background_loop import submit_background_task
+try:
+    from .background_loop import submit_background_task
+except ImportError:
+    from dreamwalker_mcp.mcp.background_loop import submit_background_task
+
+# Import naming system
+from dreamwalker_mcp.naming import (
+    get_mcp_tool_name,
+    get_mcp_resource_uri,
+    resolve_legacy_tool_name,
+    resolve_legacy_resource_uri,
+    get_pattern_info,
+    PATTERN_MAP,
+)
 
 from orchestration import (
     DreamCascadeOrchestrator,
-    DreamDreamSwarmOrchestrator,
+    DreamSwarmOrchestrator,
     DreamCascadeConfig,
-    DreamDreamSwarmConfig,
+    DreamSwarmConfig,
     OrchestratorConfig,
     OrchestratorResult,
     TaskStatus,
@@ -51,8 +64,13 @@ from orchestration import (
     AgentType,
     StreamEvent
 )
-from dreamwalker_mcp.mcp.streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
-from dreamwalker_mcp.mcp.tool_registry import ToolRegistry, get_tool_registry
+
+try:
+    from .streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
+    from .tool_registry import ToolRegistry, get_tool_registry
+except ImportError:
+    from dreamwalker_mcp.mcp.streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
+    from dreamwalker_mcp.mcp.tool_registry import ToolRegistry, get_tool_registry
 from llm_providers.factory import ProviderFactory
 from config import ConfigManager
 
@@ -590,7 +608,7 @@ class UnifiedMCPServer:
                 self.webhook_manager.register_webhook(task_id, webhook_url)
 
             # Create workflow state
-            self.workflow_state.create_workflow(task_id, 'dream-cascade', task, config)
+            self.workflow_state.create_workflow(task_id, 'cascade', task, config)
 
             # Execute asynchronously in persistent background loop
             task_obj = submit_background_task(
@@ -670,7 +688,7 @@ class UnifiedMCPServer:
                 self.webhook_manager.register_webhook(task_id, webhook_url)
 
             # Create workflow state
-            self.workflow_state.create_workflow(task_id, 'dream-swarm', query, config)
+            self.workflow_state.create_workflow(task_id, 'swarm', query, config)
 
             # Execute asynchronously in persistent background loop
             task_obj = submit_background_task(
@@ -799,7 +817,7 @@ class UnifiedMCPServer:
 
     async def tool_dreamwalker_patterns(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: list_orchestrator_patterns
+        MCP Tool: conductor.patterns
 
         List available orchestrator patterns.
 
@@ -810,36 +828,37 @@ class UnifiedMCPServer:
             {success: bool, patterns: List[Dict]}
         """
         try:
-            patterns = [
-                {
-                    'name': 'dream-cascade',
-                    'display_name': 'Dream Cascade Hierarchical Research',
-                    'description': 'Three-tier cascading synthesis with workers (parallel execution), mid-level synthesis, and executive synthesis',
-                    'use_cases': [
-                        'Comprehensive research tasks',
-                        'Academic literature review',
-                        'Market analysis',
-                        'Strategic planning'
-                    ],
-                    'default_config': DreamCascadeConfig().to_dict()
-                },
-                {
-                    'name': 'dream-swarm',
-                    'display_name': 'Dream Swarm Multi-Agent Search',
-                    'description': 'Specialized agents for different search domains (text, image, video, news, academic, etc.)',
-                    'use_cases': [
-                        'Multi-source information gathering',
-                        'Comparative analysis',
-                        'Trend analysis',
-                        'Content discovery'
-                    ],
-                    'agent_types': [
-                        'text', 'image', 'video', 'news', 'academic',
-                        'social', 'product', 'technical', 'general'
-                    ],
-                    'default_config': DreamSwarmConfig().to_dict()
-                }
-            ]
+            patterns = []
+            
+            # Get cascade pattern info
+            cascade_info = get_pattern_info('cascade')
+            patterns.append({
+                **cascade_info,
+                'use_cases': cascade_info.get('use_cases', [
+                    'Comprehensive research tasks',
+                    'Academic literature review',
+                    'Market analysis',
+                    'Strategic planning'
+                ]),
+                'default_config': DreamCascadeConfig().to_dict()
+            })
+            
+            # Get swarm pattern info
+            swarm_info = get_pattern_info('swarm')
+            patterns.append({
+                **swarm_info,
+                'use_cases': swarm_info.get('use_cases', [
+                    'Multi-source information gathering',
+                    'Comparative analysis',
+                    'Trend analysis',
+                    'Content discovery'
+                ]),
+                'agent_types': [
+                    'text', 'image', 'video', 'news', 'academic',
+                    'social', 'product', 'technical', 'general'
+                ],
+                'default_config': DreamSwarmConfig().to_dict()
+            })
 
             return {
                 "success": True,
@@ -929,33 +948,37 @@ class UnifiedMCPServer:
 
     async def resource_orchestrator_info(self, uri: str) -> Dict[str, Any]:
         """
-        MCP Resource: orchestrator://{pattern}/info
+        MCP Resource: dreamwalker://orchestrator.{pattern}/info
 
         Returns metadata about an orchestrator pattern.
 
         Args:
-            uri: Resource URI (e.g., "orchestrator://dream-cascade/info")
+            uri: Resource URI (e.g., "dreamwalker://orchestrator.cascade/info")
 
         Returns:
             Orchestrator pattern metadata
         """
         try:
-            # Parse URI: orchestrator://{pattern}/info
-            parts = uri.replace('orchestrator://', '').split('/')
-            pattern = parts[0]
-
-            patterns_response = await self.tool_dreamwalker_patterns({})
-            patterns = {p['name']: p for p in patterns_response['patterns']}
-
-            if pattern not in patterns:
+            # Support both old and new URI formats
+            original_uri = uri
+            uri = resolve_legacy_resource_uri(uri)
+            
+            # Parse URI
+            uri_parts = parse_mcp_resource_uri(uri)
+            pattern = uri_parts['slug']
+            
+            # Get pattern info
+            try:
+                pattern_info = get_pattern_info(pattern)
+            except ValueError:
                 return {
-                    "uri": uri,
+                    "uri": original_uri,
                     "error": f"Unknown orchestrator pattern: {pattern}"
                 }
-
+            
             return {
-                "uri": uri,
-                **patterns[pattern]
+                "uri": original_uri,
+                **pattern_info
             }
 
         except Exception as e:
@@ -967,7 +990,7 @@ class UnifiedMCPServer:
 
     async def resource_workflow_status(self, uri: str) -> Dict[str, Any]:
         """
-        MCP Resource: orchestrator://{task_id}/status
+        MCP Resource: dreamwalker://{task_id}/status
 
         Returns status of a workflow.
 
@@ -978,9 +1001,21 @@ class UnifiedMCPServer:
             Workflow status
         """
         try:
-            # Parse URI: orchestrator://{task_id}/status
-            parts = uri.replace('orchestrator://', '').split('/')
-            task_id = parts[0]
+            # Support both old and new URI formats
+            original_uri = uri
+            uri = resolve_legacy_resource_uri(uri)
+            
+            # Parse URI to extract task_id
+            uri_parts = parse_mcp_resource_uri(uri)
+            # Extract task_id from path (format: "{task_id}/status")
+            path_parts = uri_parts['path'].split('/')
+            task_id = path_parts[0] if path_parts else None
+            
+            if not task_id:
+                return {
+                    "uri": original_uri,
+                    "error": "Invalid URI format - missing task_id"
+                }
 
             status_response = await self.tool_get_orchestration_status({'task_id': task_id})
 
@@ -998,7 +1033,7 @@ class UnifiedMCPServer:
 
     async def resource_workflow_results(self, uri: str) -> Dict[str, Any]:
         """
-        MCP Resource: orchestrator://{task_id}/results
+        MCP Resource: dreamwalker://{task_id}/results
 
         Returns full results of a completed workflow.
 
@@ -1009,9 +1044,21 @@ class UnifiedMCPServer:
             Workflow results
         """
         try:
-            # Parse URI: orchestrator://{task_id}/results
-            parts = uri.replace('orchestrator://', '').split('/')
-            task_id = parts[0]
+            # Support both old and new URI formats
+            original_uri = uri
+            uri = resolve_legacy_resource_uri(uri)
+            
+            # Parse URI to extract task_id
+            uri_parts = parse_mcp_resource_uri(uri)
+            # Extract task_id from path (format: "{task_id}/results")
+            path_parts = uri_parts['path'].split('/')
+            task_id = path_parts[0] if path_parts else None
+            
+            if not task_id:
+                return {
+                    "uri": original_uri,
+                    "error": "Invalid URI format - missing task_id"
+                }
 
             result = self.workflow_state.get_workflow_result(task_id)
             if not result:
@@ -1062,7 +1109,7 @@ class UnifiedMCPServer:
         """
         return [
             {
-                "name": "dream_orchestrate_research",
+                "name": get_mcp_tool_name("orchestrate", "cascade"),
                 "description": "Execute Dream Cascade hierarchical research workflow with three-tier synthesis",
                 "inputSchema": {
                     "type": "object",
@@ -1113,7 +1160,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "dream_orchestrate_search",
+                "name": get_mcp_tool_name("orchestrate", "swarm"),
                 "description": "Execute Dream Swarm multi-agent search workflow with specialized agent types",
                 "inputSchema": {
                     "type": "object",
@@ -1161,7 +1208,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "dreamwalker_status",
+                "name": get_mcp_tool_name("utility", "status"),
                 "description": "Get status of a running or completed orchestration",
                 "inputSchema": {
                     "type": "object",
@@ -1175,7 +1222,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "dreamwalker_cancel",
+                "name": get_mcp_tool_name("utility", "cancel"),
                 "description": "Cancel a running orchestration",
                 "inputSchema": {
                     "type": "object",
@@ -1189,7 +1236,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "dreamwalker_patterns",
+                "name": get_mcp_tool_name("utility", "patterns"),
                 "description": "List available orchestrator patterns (Dream Cascade, Dream Swarm, etc.)",
                 "inputSchema": {
                     "type": "object",
@@ -1197,7 +1244,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "dreamwalker_list_tools",
+                "name": get_mcp_tool_name("utility", "registry_list"),
                 "description": "List tools registered in the tool registry",
                 "inputSchema": {
                     "type": "object",
@@ -1215,7 +1262,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "dreamwalker_execute_tool",
+                "name": get_mcp_tool_name("utility", "registry_execute"),
                 "description": "Execute a tool registered in the tool registry",
                 "inputSchema": {
                     "type": "object",
@@ -1243,13 +1290,13 @@ class UnifiedMCPServer:
         """
         resources = [
             {
-                "uri": "orchestrator://dream-cascade/info",
+                "uri": get_mcp_resource_uri("orchestrator", "cascade", "info"),
                 "name": "Dream Cascade Orchestrator Info",
                 "description": "Metadata about Dream Cascade hierarchical research pattern",
                 "mimeType": "application/json"
             },
             {
-                "uri": "orchestrator://dream-swarm/info",
+                "uri": get_mcp_resource_uri("orchestrator", "swarm", "info"),
                 "name": "Dream Swarm Orchestrator Info",
                 "description": "Metadata about Dream Swarm multi-agent search pattern",
                 "mimeType": "application/json"
@@ -1261,13 +1308,13 @@ class UnifiedMCPServer:
             task_id = workflow_info['task_id']
             resources.extend([
                 {
-                    "uri": f"orchestrator://{task_id}/status",
+                    "uri": get_mcp_resource_uri("dreamwalker", None, f"{task_id}/status"),
                     "name": f"{task_id} Status",
                     "description": f"Status of workflow {task_id}",
                     "mimeType": "application/json"
                 },
                 {
-                    "uri": f"orchestrator://{task_id}/results",
+                    "uri": get_mcp_resource_uri("dreamwalker", None, f"{task_id}/results"),
                     "name": f"{task_id} Results",
                     "description": f"Results of workflow {task_id}",
                     "mimeType": "application/json"

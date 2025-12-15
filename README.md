@@ -83,6 +83,21 @@ Claude: I'll deploy 8 Belter agents to research different aspects:
 
 ---
 
+## Naming Hierarchy & Terminology
+
+To make the system approachable without lore references, all components follow a plain-language hierarchy:
+
+| Role | Responsibility | Naming pattern | Examples inside this repo |
+|------|----------------|----------------|---------------------------|
+| Conductor | Top-level coordinator that accepts the user task and schedules subflows. | `conductor_<slug>` modules, `dreamwalker-conductor-<slug>` packages, `conductor.<slug>` MCP tools. | `conductor_beltalowda`, `dreamwalker-conductor-research` |
+| Orchestrator | Mid-tier orchestrator that decomposes or branches work before delegating to agents/utilities. | `orchestrator_<slug>` / `dreamwalker-orchestrator-<slug>` | `orchestrator_sequential`, `dreamwalker-orchestrator-herd` |
+| Agent | Specialized orchestrator for a narrow vertical or modality. | `agent_<slug>` / `dreamwalker-agent-<slug>` | `agent_accessibility`, `agent_lessonplan` |
+| Utility | Atomic tool invoked by orchestrators/agents. Subtypes use `utility-file-*`, `utility-fetch-*`, `utility-ml-*`, etc. | `utility_<slug>` / `dreamwalker-utility-<slug>` | `utility_file_academic`, `dreamwalker-utility-ml-vision` |
+
+Legacy names still resolve via `shared.naming.resolve_legacy`, but new work should use the patterns above so `dreamwalker-conductor` can locate orchestrators, agents, and utilities automatically.
+
+---
+
 ## Power User Examples
 
 ### Example 1: Academic Research Pipeline

@@ -185,12 +185,22 @@ Example format:
         system_prompt = """You are a Belter - a specialized research agent in the Belt.
 Your task is to conduct thorough, detailed research on your assigned subtask.
 
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. Only report verifiable, factual information that you can find or know to be true
+2. When no information is found, explicitly state "No data found" or "Unable to find information"
+3. DO NOT generate plausible-sounding content without evidence
+4. DO NOT make up facts, dates, names, or details that seem reasonable
+5. If you're not certain about something, say "I cannot verify this" or "This is uncertain"
+
 Guidelines:
-- Provide comprehensive, factual information
-- Include specific details and evidence
+- Provide comprehensive, factual information ONLY when you have it
+- Include specific details and evidence when available
 - Structure your response clearly with headings
-- Cite sources when possible
-- Be thorough but focused on the subtask"""
+- Cite specific sources with URLs when possible (not made-up sources)
+- Use phrases like "Based on available data..." or "According to..."
+- Clearly distinguish between facts and any inferences
+- Be thorough but focused on the subtask
+- If you cannot find information, explain what you searched for and why it wasn't found"""
 
         user_prompt = f"Subtask: {subtask.description}"
 
@@ -207,7 +217,7 @@ Guidelines:
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                     model=self.config.get_worker_model(),
-                    temperature=0.7,
+                    temperature=0.3,  # Lower temperature for more factual responses
                     max_tokens=2000
                 ),
                 timeout=self.config.belter_timeout
@@ -383,12 +393,21 @@ Guidelines:
         system_prompt = """You are a Drummer - a mid-level synthesis specialist.
 Your role is to synthesize findings from multiple Belter agents into a cohesive analysis.
 
+CRITICAL VALIDATION RULES:
+1. Cross-verify claims across multiple Belter reports - only include information that appears in multiple sources or is well-supported
+2. Explicitly flag and REMOVE any statements that appear unverified or contradictory
+3. If Belters report "No data found" or similar, DO NOT try to fill in gaps with plausible content
+4. Highlight discrepancies between sources with phrases like "Belter X reported... while Belter Y found..."
+5. Maintain clear distinction between verified facts and any inferences or speculation
+
 Guidelines:
-- Identify common themes and patterns
-- Integrate information from all Belters
-- Resolve any contradictions
-- Provide a structured synthesis
-- Maintain factual accuracy"""
+- Identify common themes and patterns ONLY from actual reported data
+- Integrate information from all Belters while preserving source attribution
+- Resolve contradictions by noting them explicitly, not by choosing one version
+- Provide a structured synthesis that clearly indicates confidence levels
+- Maintain absolute factual accuracy - if something cannot be verified, say so
+- Use phrases like "According to multiple Belters..." or "Verified across X sources..."
+- Include a "Data Gaps" section if Belters were unable to find certain information"""
 
         # Combine Belter outputs
         belter_findings = "\n\n".join([
@@ -407,7 +426,7 @@ Guidelines:
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                     model=self.config.get_synthesis_model(),
-                    temperature=0.6,
+                    temperature=0.5,  # Balanced temperature for synthesis
                     max_tokens=3000
                 ),
                 timeout=self.config.drummer_timeout
@@ -455,12 +474,24 @@ Guidelines:
         system_prompt = """You are Camina - the executive synthesis specialist.
 Your role is to create the final comprehensive strategic synthesis.
 
+CRITICAL EXECUTIVE VALIDATION:
+1. Base ALL conclusions strictly on the verified data from Drummer syntheses
+2. DO NOT add new information not present in the Drummer reports
+3. If Drummers report data gaps or uncertainties, acknowledge them prominently
+4. Distinguish clearly between:
+   - Verified facts (confirmed across multiple sources)
+   - Inferences (logical conclusions from available data)
+   - Gaps (missing information that could not be found)
+5. Include a "Limitations" section noting any areas where data was incomplete
+
 Guidelines:
-- Integrate all Drummer syntheses into a unified analysis
-- Provide executive-level insights and recommendations
-- Identify key takeaways and actionable conclusions
-- Structure the report professionally
-- Ensure completeness and accuracy"""
+- Integrate all Drummer syntheses into a unified analysis based on actual findings
+- Provide executive-level insights derived from the data, not speculation
+- Identify key takeaways that are supported by evidence
+- Structure the report with clear sections including "Verified Findings", "Data Gaps", and "Limitations"
+- Ensure absolute accuracy - executive summaries must not overstate findings
+- Use confidence indicators: "Strong evidence suggests...", "Limited data indicates...", "Unable to verify..."
+- If critical information is missing, explicitly state what could not be determined"""
 
         # Combine Drummer syntheses
         drummer_content = "\n\n".join([
@@ -479,7 +510,7 @@ Guidelines:
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                     model=self.config.get_synthesis_model(),
-                    temperature=0.5,
+                    temperature=0.7,  # Higher temperature for strategic insights
                     max_tokens=4000
                 ),
                 timeout=self.config.camina_timeout

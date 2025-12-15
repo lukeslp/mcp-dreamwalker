@@ -491,6 +491,448 @@ class DataServer:
             }
 
     # -------------------------------------------------------------------------
+    # MCP Tools - Finance (Alpha Vantage)
+    # -------------------------------------------------------------------------
+
+    def get_finance_client(self) -> 'FinanceClient':
+        """Get or create Finance client."""
+        if not hasattr(self, '_finance_client') or self._finance_client is None:
+            from data_fetching import FinanceClient
+            self._finance_client = FinanceClient()
+        return self._finance_client
+
+    def tool_dream_of_finance_stock(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_finance_stock
+        
+        Get stock market data from Alpha Vantage.
+        
+        Arguments:
+            symbol (str): Stock ticker symbol (e.g., "AAPL")
+            interval (str, optional): Time interval (1min, 5min, 15min, 30min, 60min, daily)
+            
+        Returns:
+            {success: bool, data: Dict, metadata: Dict}
+        """
+        try:
+            symbol = arguments.get('symbol')
+            if not symbol:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: symbol"
+                }
+            
+            client = self.get_finance_client()
+            interval = arguments.get('interval', 'daily')
+            
+            if interval == 'daily':
+                data = client.get_daily(symbol)
+            else:
+                data = client.get_intraday(symbol, interval=interval)
+            
+            return {
+                "success": True,
+                "data": data,
+                "metadata": {
+                    "symbol": symbol,
+                    "interval": interval,
+                    "source": "Alpha Vantage",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_finance_stock: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - GitHub
+    # -------------------------------------------------------------------------
+
+    def get_github_client(self) -> 'GitHubClient':
+        """Get or create GitHub client."""
+        if not hasattr(self, '_github_client') or self._github_client is None:
+            from data_fetching import GitHubClient
+            self._github_client = GitHubClient()
+        return self._github_client
+
+    def tool_dream_of_github_repos(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_github_repos
+        
+        Search GitHub repositories.
+        
+        Arguments:
+            query (str): Search query
+            sort (str, optional): Sort by (stars, forks, updated)
+            per_page (int, optional): Results per page (default: 30)
+            
+        Returns:
+            {success: bool, repositories: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+            
+            client = self.get_github_client()
+            result = client.search_repositories(
+                query=query,
+                sort=arguments.get('sort', 'stars'),
+                per_page=arguments.get('per_page', 30)
+            )
+            
+            return {
+                "success": True,
+                "repositories": result.get('items', []),
+                "total_count": result.get('total_count', 0),
+                "metadata": {
+                    "query": query,
+                    "source": "GitHub API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_github_repos: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - NASA
+    # -------------------------------------------------------------------------
+
+    def get_nasa_client(self) -> 'NASAClient':
+        """Get or create NASA client."""
+        if not hasattr(self, '_nasa_client') or self._nasa_client is None:
+            from data_fetching import NASAClient
+            self._nasa_client = NASAClient()
+        return self._nasa_client
+
+    def tool_dream_of_nasa_apod(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_nasa_apod
+        
+        Get NASA Astronomy Picture of the Day.
+        
+        Arguments:
+            date (str, optional): Date in YYYY-MM-DD format (default: today)
+            count (int, optional): Number of random APODs
+            
+        Returns:
+            {success: bool, apod: Dict, metadata: Dict}
+        """
+        try:
+            client = self.get_nasa_client()
+            apod = client.get_apod(
+                date=arguments.get('date'),
+                count=arguments.get('count')
+            )
+            
+            return {
+                "success": True,
+                "apod": apod,
+                "metadata": {
+                    "source": "NASA APOD API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_nasa_apod: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - News API
+    # -------------------------------------------------------------------------
+
+    def get_news_client(self) -> 'NewsClient':
+        """Get or create News client."""
+        if not hasattr(self, '_news_client') or self._news_client is None:
+            from data_fetching import NewsClient
+            self._news_client = NewsClient()
+        return self._news_client
+
+    def tool_dream_of_news(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_news
+        
+        Get top news headlines.
+        
+        Arguments:
+            query (str, optional): Search query
+            country (str, optional): Country code (default: us)
+            category (str, optional): Category (business, technology, etc.)
+            page_size (int, optional): Results per page (default: 20)
+            
+        Returns:
+            {success: bool, articles: List[Dict], metadata: Dict}
+        """
+        try:
+            client = self.get_news_client()
+            
+            if arguments.get('query'):
+                result = client.search_everything(
+                    query=arguments['query'],
+                    page_size=arguments.get('page_size', 20)
+                )
+            else:
+                result = client.get_top_headlines(
+                    country=arguments.get('country', 'us'),
+                    category=arguments.get('category'),
+                    page_size=arguments.get('page_size', 20)
+                )
+            
+            return {
+                "success": True,
+                "articles": result.get('articles', []),
+                "total_results": result.get('totalResults', 0),
+                "metadata": {
+                    "source": "News API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_news: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - OpenLibrary
+    # -------------------------------------------------------------------------
+
+    def get_openlibrary_client(self) -> 'OpenLibraryClient':
+        """Get or create OpenLibrary client."""
+        if not hasattr(self, '_openlibrary_client') or self._openlibrary_client is None:
+            from data_fetching import OpenLibraryClient
+            self._openlibrary_client = OpenLibraryClient()
+        return self._openlibrary_client
+
+    def tool_dream_of_books(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_books
+        
+        Search books via OpenLibrary.
+        
+        Arguments:
+            query (str): Search query
+            limit (int, optional): Max results (default: 10)
+            
+        Returns:
+            {success: bool, books: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+            
+            client = self.get_openlibrary_client()
+            books = client.search(query=query, limit=arguments.get('limit', 10))
+            
+            return {
+                "success": True,
+                "books": books,
+                "count": len(books),
+                "metadata": {
+                    "query": query,
+                    "source": "OpenLibrary",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_books: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - Weather
+    # -------------------------------------------------------------------------
+
+    def get_weather_client(self) -> 'WeatherClient':
+        """Get or create Weather client."""
+        if not hasattr(self, '_weather_client') or self._weather_client is None:
+            from data_fetching import WeatherClient
+            self._weather_client = WeatherClient()
+        return self._weather_client
+
+    def tool_dream_of_weather(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_weather
+        
+        Get current weather for a location.
+        
+        Arguments:
+            location (str): City name or location
+            units (str, optional): Units (metric, imperial, standard)
+            
+        Returns:
+            {success: bool, weather: Dict, metadata: Dict}
+        """
+        try:
+            location = arguments.get('location')
+            if not location:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: location"
+                }
+            
+            client = self.get_weather_client()
+            weather = client.get_current_weather(
+                location=location,
+                units=arguments.get('units', 'metric')
+            )
+            
+            return {
+                "success": True,
+                "weather": weather,
+                "metadata": {
+                    "location": location,
+                    "source": "OpenWeatherMap",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_weather: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - Wikipedia
+    # -------------------------------------------------------------------------
+
+    def get_wikipedia_client(self) -> 'WikipediaClient':
+        """Get or create Wikipedia client."""
+        if not hasattr(self, '_wikipedia_client') or self._wikipedia_client is None:
+            from data_fetching import WikipediaClient
+            self._wikipedia_client = WikipediaClient()
+        return self._wikipedia_client
+
+    def tool_dream_of_wikipedia(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_wikipedia
+        
+        Search Wikipedia and get article content.
+        
+        Arguments:
+            query (str): Search query
+            sentences (int, optional): Number of sentences in summary (default: 3)
+            
+        Returns:
+            {success: bool, article: Dict, metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+            
+            client = self.get_wikipedia_client()
+            article = client.search(
+                query=query,
+                sentences=arguments.get('sentences', 3)
+            )
+            
+            return {
+                "success": True,
+                "article": article,
+                "metadata": {
+                    "query": query,
+                    "source": "Wikipedia",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_wikipedia: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - YouTube
+    # -------------------------------------------------------------------------
+
+    def get_youtube_client(self) -> 'YouTubeClient':
+        """Get or create YouTube client."""
+        if not hasattr(self, '_youtube_client') or self._youtube_client is None:
+            from data_fetching import YouTubeClient
+            self._youtube_client = YouTubeClient()
+        return self._youtube_client
+
+    def tool_dream_of_youtube(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_youtube
+        
+        Search YouTube videos.
+        
+        Arguments:
+            query (str): Search query
+            max_results (int, optional): Max results (default: 10)
+            order (str, optional): Sort order (relevance, date, rating, views)
+            
+        Returns:
+            {success: bool, videos: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+            
+            client = self.get_youtube_client()
+            videos = client.search(
+                query=query,
+                max_results=arguments.get('max_results', 10),
+                order=arguments.get('order', 'relevance')
+            )
+            
+            return {
+                "success": True,
+                "videos": videos,
+                "count": len(videos),
+                "metadata": {
+                    "query": query,
+                    "source": "YouTube Data API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_youtube: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
     # MCP Resources
     # -------------------------------------------------------------------------
 
@@ -801,6 +1243,172 @@ class DataServer:
                         }
                     },
                     "required": ["url"]
+                }
+            },
+            # Finance tools
+            {
+                "name": "dream_of_finance_stock",
+                "description": "Get stock market data from Alpha Vantage",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "type": "string",
+                            "description": "Stock ticker symbol (e.g., AAPL)"
+                        },
+                        "interval": {
+                            "type": "string",
+                            "description": "Time interval (1min, 5min, 15min, 30min, 60min, daily)"
+                        }
+                    },
+                    "required": ["symbol"]
+                }
+            },
+            # GitHub tools
+            {
+                "name": "dream_of_github_repos",
+                "description": "Search GitHub repositories",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "sort": {
+                            "type": "string",
+                            "description": "Sort by (stars, forks, updated)"
+                        },
+                        "per_page": {
+                            "type": "integer",
+                            "description": "Results per page (default: 30)"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            },
+            # NASA tools
+            {
+                "name": "dream_of_nasa_apod",
+                "description": "Get NASA Astronomy Picture of the Day",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "date": {
+                            "type": "string",
+                            "description": "Date in YYYY-MM-DD format (optional)"
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of random APODs (optional)"
+                        }
+                    }
+                }
+            },
+            # News tools
+            {
+                "name": "dream_of_news",
+                "description": "Get top news headlines",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query (optional)"
+                        },
+                        "country": {
+                            "type": "string",
+                            "description": "Country code (default: us)"
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Category (business, technology, etc.)"
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Results per page (default: 20)"
+                        }
+                    }
+                }
+            },
+            # OpenLibrary tools
+            {
+                "name": "dream_of_books",
+                "description": "Search books via OpenLibrary",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Max results (default: 10)"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            },
+            # Weather tools
+            {
+                "name": "dream_of_weather",
+                "description": "Get current weather for a location",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "City name or location"
+                        },
+                        "units": {
+                            "type": "string",
+                            "description": "Units (metric, imperial, standard)"
+                        }
+                    },
+                    "required": ["location"]
+                }
+            },
+            # Wikipedia tools
+            {
+                "name": "dream_of_wikipedia",
+                "description": "Search Wikipedia and get article content",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "sentences": {
+                            "type": "integer",
+                            "description": "Number of sentences in summary (default: 3)"
+                        }
+                    },
+                    "required": ["query"]
+                }
+            },
+            # YouTube tools
+            {
+                "name": "dream_of_youtube",
+                "description": "Search YouTube videos",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "max_results": {
+                            "type": "integer",
+                            "description": "Max results (default: 10)"
+                        },
+                        "order": {
+                            "type": "string",
+                            "description": "Sort order (relevance, date, rating, views)"
+                        }
+                    },
+                    "required": ["query"]
                 }
             }
         ]

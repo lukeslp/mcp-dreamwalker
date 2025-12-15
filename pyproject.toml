@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "dreamwalker-mcp"
 version = "1.0.0"
 description = "Multi-agent orchestration and LLM provider abstraction via MCP protocol"
-authors = [{name = "Luke Steuber"}]
+authors = [{name = "Luke Steuber", email = "luke@lukesteuber.com"}]
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.8"
@@ -25,8 +25,8 @@ classifiers = [
 
 dependencies = [
     "python-dotenv>=1.0.0",
-    "requests>=2.31.0",
-    "aiohttp>=3.9.0",
+    "requests>=2.32.5",
+    "aiohttp>=3.12.14",
 ]
 
 [project.optional-dependencies]
@@ -75,9 +75,10 @@ all = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/dreamwalker-mcp"
-Repository = "https://github.com/yourusername/dreamwalker-mcp"
-Issues = "https://github.com/yourusername/dreamwalker-mcp/issues"
+Homepage = "https://dr.eamer.dev/dreamwalker/"
+Repository = "https://github.com/lukeslp/kernel"
+Issues = "https://github.com/lukeslp/kernel/issues"
+Documentation = "https://dr.eamer.dev/dreamwalker/"
 
 [project.scripts]
 dreamwalker-unified = "dreamwalker_mcp.mcp.stdio_servers.unified_stdio:main"

@@ -77,14 +77,14 @@ async def handle_mcp_request(server: UnifiedMCPServer, request: Dict[str, Any]) 
 
             # Map tool calls to server methods (both new and legacy names)
             tool_method_map = {
-                # New names (dreamwalker.type.name pattern)
-                'dreamwalker.orchestrate.cascade': server.tool_dream_orchestrate_research,
-                'dreamwalker.orchestrate.swarm': server.tool_dream_orchestrate_search,
-                'dreamwalker.utility.status': server.tool_dreamwalker_status,
-                'dreamwalker.utility.cancel': server.tool_dreamwalker_cancel,
-                'dreamwalker.utility.patterns': server.tool_dreamwalker_patterns,
-                'dreamwalker.utility.registry.list': server.tool_dreamwalker_list_tools,
-                'dreamwalker.utility.registry.execute': server.tool_dreamwalker_execute_tool,
+                # New names (dreamwalker_type_name pattern)
+                'dreamwalker_orchestrate_cascade': server.tool_dream_orchestrate_research,
+                'dreamwalker_orchestrate_swarm': server.tool_dream_orchestrate_search,
+                'dreamwalker_utility_status': server.tool_dreamwalker_status,
+                'dreamwalker_utility_cancel': server.tool_dreamwalker_cancel,
+                'dreamwalker_utility_patterns': server.tool_dreamwalker_patterns,
+                'dreamwalker_utility_registry_list': server.tool_dreamwalker_list_tools,
+                'dreamwalker_utility_registry_execute': server.tool_dreamwalker_execute_tool,
                 # Legacy names for backward compatibility
                 'dream_orchestrate_research': server.tool_dream_orchestrate_research,
                 'dream_orchestrate_search': server.tool_dream_orchestrate_search,

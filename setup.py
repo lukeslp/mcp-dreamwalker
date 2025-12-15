@@ -13,10 +13,11 @@ setup(
     name="dreamwalker-mcp",
     version="1.0.0",
     author="Luke Steuber",
+    author_email="luke@lukesteuber.com",
     description="Multi-agent orchestration and LLM provider abstraction via MCP protocol",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/dreamwalker-mcp",
+    url="https://github.com/lukeslp/kernel",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
@@ -33,8 +34,8 @@ setup(
     install_requires=[
         # Core dependencies
         "python-dotenv>=1.0.0",
-        "requests>=2.31.0",
-        "aiohttp>=3.9.0",
+        "requests>=2.32.5",
+        "aiohttp>=3.12.14",
     ],
     extras_require={
         # LLM Providers

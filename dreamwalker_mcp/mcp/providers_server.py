@@ -65,16 +65,9 @@ class ProvidersServer:
         if cache_key in self.providers_cache:
             return self.providers_cache[cache_key]
 
-        api_key = self.config.get_api_key(provider_name)
-        if not api_key:
-            raise ValueError(f"No API key configured for provider: {provider_name}")
-
         try:
-            provider = ProviderFactory.create_provider(
-                provider_name=provider_name,
-                api_key=api_key,
-                model=model
-            )
+            # Use ProviderFactory which handles API keys from environment/config
+            provider = ProviderFactory.get_provider(provider_name)
             self.providers_cache[cache_key] = provider
             return provider
 
@@ -417,6 +410,14 @@ class ProvidersServer:
         """
         return [
             {
+                "name": "list_available_providers",
+                "description": "List all available LLM providers (anthropic, openai, xai, mistral, cohere, gemini, perplexity, groq, huggingface, elevenlabs, manus)",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
+                }
+            },
+            {
                 "name": "create_provider",
                 "description": "Create and cache a provider instance",
                 "inputSchema": {
@@ -424,7 +425,7 @@ class ProvidersServer:
                     "properties": {
                         "provider_name": {
                             "type": "string",
-                            "description": "Provider name (anthropic, openai, xai, etc.)"
+                            "description": "Provider name (anthropic, openai, xai, mistral, cohere, gemini, perplexity, groq, huggingface, elevenlabs, manus)"
                         },
                         "model": {
                             "type": "string",
@@ -502,6 +503,34 @@ class ProvidersServer:
             }
         ]
 
+    def tool_list_available_providers(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: list_available_providers
+        
+        List all available LLM providers in the factory.
+        
+        Arguments:
+            None
+            
+        Returns:
+            {success: bool, providers: List[str], count: int}
+        """
+        try:
+            providers = ProviderFactory.list_providers()
+            
+            return {
+                "success": True,
+                "providers": sorted(providers),
+                "count": len(providers)
+            }
+            
+        except Exception as e:
+            logger.exception(f"Error in list_available_providers: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
     def get_resources_manifest(self) -> List[Dict[str, Any]]:
         """
         Return MCP resources manifest.
@@ -509,7 +538,8 @@ class ProvidersServer:
         Returns:
             List of resource templates
         """
-        available_providers = self.config.list_available_providers()
+        # Use ProviderFactory to get actual available providers
+        available_providers = ProviderFactory.list_providers()
 
         resources = []
         for provider_name in available_providers:
