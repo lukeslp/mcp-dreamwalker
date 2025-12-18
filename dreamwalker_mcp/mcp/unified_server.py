@@ -942,6 +942,118 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
+    async def tool_dreamwalker_workflow_checklist(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: workflow_checklist
+
+        Returns the mandatory workflow requirements checklist.
+        Use this at the start of tasks to remind yourself of required practices.
+
+        Arguments:
+            None
+
+        Returns:
+            {success: bool, checklist: List[Dict], quick_reference: str}
+        """
+        try:
+            checklist = [
+                {
+                    "id": 1,
+                    "rule": "ALWAYS Use TodoWrite",
+                    "description": "Create a todo list at the START of every non-trivial task",
+                    "actions": ["TodoWrite at start", "Mark in_progress/completed", "Break into steps"]
+                },
+                {
+                    "id": 2,
+                    "rule": "ALWAYS Call Agents",
+                    "description": "Route to appropriate geepers agents for specialized work",
+                    "actions": ["Complex → @conductor_geepers", "Medium → orchestrator", "Specific → agent"]
+                },
+                {
+                    "id": 3,
+                    "rule": "ALWAYS Commit Before Major Changes",
+                    "description": "Create checkpoint before significant edits",
+                    "actions": ["git add -A && git commit -m 'checkpoint before [change]'"]
+                },
+                {
+                    "id": 4,
+                    "rule": "ALWAYS Read Before Edit",
+                    "description": "Never edit a file without reading it first",
+                    "actions": ["Read tool before Edit tool", "Understand context"]
+                },
+                {
+                    "id": 5,
+                    "rule": "ALWAYS Check Existing State",
+                    "description": "Verify files/services/ports don't already exist",
+                    "actions": ["Glob before Write", "sm status before services", "gh repo list before repos"]
+                },
+                {
+                    "id": 6,
+                    "rule": "Use EnterPlanMode for Multi-File Changes",
+                    "description": "Get user sign-off before touching 3+ files",
+                    "actions": ["EnterPlanMode", "Write plan", "ExitPlanMode after approval"]
+                },
+                {
+                    "id": 7,
+                    "rule": "Parallel Tool Calls When Independent",
+                    "description": "Batch independent operations in single messages",
+                    "actions": ["Multiple Reads in parallel", "Multiple agent launches"]
+                },
+                {
+                    "id": 8,
+                    "rule": "Verify After Changes",
+                    "description": "Confirm changes work correctly",
+                    "actions": ["pytest after code", "sm status after services", "caddy validate after Caddy"]
+                },
+                {
+                    "id": 9,
+                    "rule": "Check Recommendations Before Starting",
+                    "description": "Review existing analysis first",
+                    "actions": ["Check ~/geepers/recommendations/by-project/"]
+                },
+                {
+                    "id": 10,
+                    "rule": "Use Explore Agent for Open-Ended Search",
+                    "description": "Let agents handle multi-step exploration",
+                    "actions": ["Grep/Glob for needle queries", "Task(Explore) for discovery"]
+                }
+            ]
+
+            quick_reference = """
+BEFORE TASK:
+- [ ] Check ~/geepers/recommendations/by-project/
+- [ ] Create TodoWrite list if multi-step
+- [ ] Consider which agent(s) to involve
+
+BEFORE CREATING:
+- [ ] Glob/search to verify doesn't exist
+- [ ] Check sm status for service conflicts
+- [ ] Check Caddyfile for port conflicts
+
+BEFORE EDITING:
+- [ ] Read the file first
+- [ ] Commit if making major changes
+
+AFTER CHANGES:
+- [ ] Run relevant tests
+- [ ] Verify services running
+- [ ] Validate configs
+"""
+
+            return {
+                "success": True,
+                "checklist": checklist,
+                "quick_reference": quick_reference,
+                "full_docs": "~/geepers/agents/shared/WORKFLOW_REQUIREMENTS.md"
+            }
+
+        except Exception as e:
+            logger.exception(f"Error in workflow_checklist: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
     # -------------------------------------------------------------------------
     # MCP Resources
     # -------------------------------------------------------------------------
@@ -1277,6 +1389,14 @@ class UnifiedMCPServer:
                         }
                     },
                     "required": ["tool_name"]
+                }
+            },
+            {
+                "name": get_mcp_tool_name("utility", "workflow_checklist"),
+                "description": "Get the mandatory workflow requirements checklist. Use at the start of tasks to remind yourself of required practices (TodoWrite, agents, commits, verification).",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {}
                 }
             }
         ]
