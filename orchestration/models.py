@@ -8,7 +8,7 @@ Author: Luke Steuber
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Any, Callable
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 from enum import Enum
 

@@ -5,12 +5,13 @@ Comprehensive MCP server exposing orchestrator agents for long-running workflows
 Integrates with streaming infrastructure (SSE, webhooks) and state management.
 
 Tools provided:
-- orchestrate_research: Execute Beltalowda hierarchical research workflow
-- orchestrate_search: Execute Swarm multi-agent search workflow
-- orchestrate_custom: Execute custom orchestrator pattern
-- get_orchestration_status: Check workflow status
-- list_orchestrator_patterns: List available orchestrator patterns
-- cancel_orchestration: Cancel running workflow
+- dream_research: Execute Dream Cascade hierarchical research workflow
+- dream_search: Execute Dream Swarm multi-agent search workflow
+- dreamwalker_status: Check workflow status
+- dreamwalker_cancel: Cancel running workflow
+- dreamwalker_patterns: List available orchestrator patterns
+- dreamwalker_list_tools: List registered tools
+- dreamwalker_execute_tool: Execute a registered tool
 
 Resources provided:
 - orchestrator://{pattern}/info: Orchestrator metadata
@@ -24,37 +25,42 @@ Streaming:
 Author: Luke Steuber
 """
 
-import asyncio
-import json
 import logging
-import sys
-import uuid
+from typing import Dict, List, Optional, Any, Callable
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+import uuid
 
 # Import from shared library
+import sys
 sys.path.insert(0, '/home/coolhand/shared')
 
 # Import background loop for persistent async execution
-from .background_loop import submit_background_task
+try:
+    from .background_loop import submit_background_task
+except ImportError:
+    from mcp.background_loop import submit_background_task
 
 from orchestration import (
-    BeltalowdaOrchestrator,
-    SwarmOrchestrator,
-    BeltalowdaConfig,
-    SwarmConfig,
+    DreamCascadeOrchestrator,
+    DreamSwarmOrchestrator,
+    DreamCascadeConfig,
+    DreamSwarmConfig,
     OrchestratorConfig,
     OrchestratorResult,
     TaskStatus,
     AgentResult,
     SynthesisResult,
     AgentType,
-    StreamEvent,
-    EventType
+    StreamEvent
 )
-from mcp.streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
-from mcp.tool_registry import ToolRegistry, get_tool_registry
+
+try:
+    from .streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
+    from .tool_registry import ToolRegistry, get_tool_registry
+except ImportError:
+    from mcp.streaming import StreamingBridge, WebhookManager, get_streaming_bridge, get_webhook_manager
+    from mcp.tool_registry import ToolRegistry, get_tool_registry
 from llm_providers.factory import ProviderFactory
 from config import ConfigManager
 
@@ -71,7 +77,7 @@ class WorkflowState:
 
     Tracks active orchestrations, results, and provides cleanup.
     """
-    
+
     MAX_ACTIVE_WORKFLOWS = 50  # Prevent unbounded growth
 
     def __init__(self):
@@ -93,13 +99,13 @@ class WorkflowState:
 
         Args:
             task_id: Unique task identifier
-            orchestrator_type: Type of orchestrator (beltalowda, swarm, custom)
+            orchestrator_type: Type of orchestrator (dream-cascade, dream-swarm, custom)
             task: Task description
             config: Orchestrator configuration
 
         Returns:
             Workflow info dict
-            
+
         Raises:
             ValueError: If maximum active workflows exceeded
         """
@@ -109,7 +115,7 @@ class WorkflowState:
                 f"Maximum active workflows ({self.MAX_ACTIVE_WORKFLOWS}) exceeded. "
                 f"Please wait for existing workflows to complete or cancel them."
             )
-        
+
         workflow_info = {
             'task_id': task_id,
             'orchestrator_type': orchestrator_type,
@@ -160,7 +166,7 @@ class WorkflowState:
             result: Orchestrator result
         """
         logger.info(f"Completing workflow {task_id} with status {result.status}")
-        
+
         # Set completion timestamp before storing
         if task_id in self.active_workflows:
             completion_time = datetime.utcnow().isoformat()
@@ -171,7 +177,7 @@ class WorkflowState:
 
         # Ensure result stores completion timestamp
         result.completed_at = completion_time
-        
+
         # Store result
         self.completed_workflows[task_id] = result
         logger.info(f"Workflow {task_id} marked as completed. Active workflows: {len(self.active_workflows)}, Completed: {len(self.completed_workflows)}")
@@ -383,7 +389,7 @@ class UnifiedMCPServer:
     """
     Unified MCP server for orchestrator agents.
 
-    Exposes Beltalowda, Swarm Search, and custom orchestrator patterns
+    Exposes Dream Cascade, Dream Swarm, and custom orchestrator patterns
     through MCP protocol with streaming support.
     """
 
@@ -534,17 +540,17 @@ class UnifiedMCPServer:
     # MCP Tools
     # -------------------------------------------------------------------------
 
-    async def tool_orchestrate_research(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_orchestrate_research(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: orchestrate_research
+        MCP Tool: dream_research
 
-        Execute Beltalowda hierarchical research workflow.
+        Execute Dream Cascade hierarchical research workflow.
 
         Arguments:
             task (str): Research task description
             title (str, optional): Workflow title
-            num_agents (int, optional): Number of Belter agents (default: 8)
-            enable_drummer (bool, optional): Enable Drummer synthesis (default: True)
+            num_agents (int, optional): Number of worker agents (default: 8)
+            enable_drummer (bool, optional): Enable mid-level synthesis (default: True)
             enable_camina (bool, optional): Enable Camina executive synthesis (default: True)
             generate_documents (bool, optional): Generate PDF/DOCX/MD reports (default: True)
             document_formats (List[str], optional): Document formats (default: ["markdown"])
@@ -566,7 +572,7 @@ class UnifiedMCPServer:
             title = arguments.get('title', f"Research: {task[:50]}...")
 
             # Build config
-            config = BeltalowdaConfig(
+            config = DreamCascadeConfig(
                 num_agents=arguments.get('num_agents', 8),
                 enable_drummer=arguments.get('enable_drummer', True),
                 enable_camina=arguments.get('enable_camina', True),
@@ -581,7 +587,7 @@ class UnifiedMCPServer:
             provider = self._get_provider(provider_name, model)
 
             # Create orchestrator
-            orchestrator = BeltalowdaOrchestrator(config=config, provider=provider, model=model)
+            orchestrator = DreamCascadeOrchestrator(config=config, provider=provider, model=model)
 
             # Generate task ID
             task_id = f"research_{uuid.uuid4().hex[:12]}"
@@ -592,7 +598,7 @@ class UnifiedMCPServer:
                 self.webhook_manager.register_webhook(task_id, webhook_url)
 
             # Create workflow state
-            self.workflow_state.create_workflow(task_id, 'beltalowda', task, config)
+            self.workflow_state.create_workflow(task_id, 'dream-cascade', task, config)
 
             # Execute asynchronously in persistent background loop
             task_obj = submit_background_task(
@@ -605,7 +611,7 @@ class UnifiedMCPServer:
                 "task_id": task_id,
                 "status": "running",
                 "stream_url": f"/stream/{task_id}",
-                "orchestrator_type": "beltalowda",
+                "orchestrator_type": "dream-cascade",
                 "config": config.to_dict()
             }
 
@@ -616,11 +622,11 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_orchestrate_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dream_orchestrate_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: orchestrate_search
+        MCP Tool: dream_search
 
-        Execute Swarm multi-agent search workflow.
+        Execute Dream Swarm multi-agent search workflow.
 
         Arguments:
             query (str): Search query
@@ -647,7 +653,7 @@ class UnifiedMCPServer:
             title = arguments.get('title', f"Search: {query[:50]}...")
 
             # Build config
-            config = SwarmConfig(
+            config = DreamSwarmConfig(
                 num_agents=arguments.get('num_agents', 5),
                 allowed_agent_types=arguments.get('allowed_agent_types'),
                 generate_documents=arguments.get('generate_documents', True),
@@ -661,7 +667,7 @@ class UnifiedMCPServer:
             provider = self._get_provider(provider_name, model)
 
             # Create orchestrator
-            orchestrator = SwarmOrchestrator(config=config, provider=provider, model=model)
+            orchestrator = DreamSwarmOrchestrator(config=config, provider=provider, model=model)
 
             # Generate task ID
             task_id = f"search_{uuid.uuid4().hex[:12]}"
@@ -672,7 +678,7 @@ class UnifiedMCPServer:
                 self.webhook_manager.register_webhook(task_id, webhook_url)
 
             # Create workflow state
-            self.workflow_state.create_workflow(task_id, 'swarm', query, config)
+            self.workflow_state.create_workflow(task_id, 'dream-swarm', query, config)
 
             # Execute asynchronously in persistent background loop
             task_obj = submit_background_task(
@@ -696,7 +702,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_get_orchestration_status(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dreamwalker_status(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: get_orchestration_status
 
@@ -760,7 +766,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_cancel_orchestration(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dreamwalker_cancel(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: cancel_orchestration
 
@@ -799,7 +805,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_list_orchestrator_patterns(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dreamwalker_patterns(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: list_orchestrator_patterns
 
@@ -814,20 +820,20 @@ class UnifiedMCPServer:
         try:
             patterns = [
                 {
-                    'name': 'beltalowda',
-                    'display_name': 'Beltalowda Hierarchical Research',
-                    'description': 'Multi-tier research with Belters (workers), Drummers (mid-synthesis), and Camina (executive synthesis)',
+                    'name': 'dream-cascade',
+                    'display_name': 'Dream Cascade Hierarchical Research',
+                    'description': 'Three-tier cascading synthesis with workers (parallel execution), mid-level synthesis, and executive synthesis',
                     'use_cases': [
                         'Comprehensive research tasks',
                         'Academic literature review',
                         'Market analysis',
                         'Strategic planning'
                     ],
-                    'default_config': BeltalowdaConfig().to_dict()
+                    'default_config': DreamCascadeConfig().to_dict()
                 },
                 {
-                    'name': 'swarm',
-                    'display_name': 'Swarm Multi-Agent Search',
+                    'name': 'dream-swarm',
+                    'display_name': 'Dream Swarm Multi-Agent Search',
                     'description': 'Specialized agents for different search domains (text, image, video, news, academic, etc.)',
                     'use_cases': [
                         'Multi-source information gathering',
@@ -839,7 +845,7 @@ class UnifiedMCPServer:
                         'text', 'image', 'video', 'news', 'academic',
                         'social', 'product', 'technical', 'general'
                     ],
-                    'default_config': SwarmConfig().to_dict()
+                    'default_config': DreamSwarmConfig().to_dict()
                 }
             ]
 
@@ -855,7 +861,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_list_registered_tools(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dreamwalker_list_tools(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: list_registered_tools
 
@@ -887,7 +893,7 @@ class UnifiedMCPServer:
                 "error": str(e)
             }
 
-    async def tool_execute_registered_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    async def tool_dreamwalker_execute_tool(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         MCP Tool: execute_registered_tool
 
@@ -936,7 +942,7 @@ class UnifiedMCPServer:
         Returns metadata about an orchestrator pattern.
 
         Args:
-            uri: Resource URI (e.g., "orchestrator://beltalowda/info")
+            uri: Resource URI (e.g., "orchestrator://dream-cascade/info")
 
         Returns:
             Orchestrator pattern metadata
@@ -946,7 +952,7 @@ class UnifiedMCPServer:
             parts = uri.replace('orchestrator://', '').split('/')
             pattern = parts[0]
 
-            patterns_response = await self.tool_list_orchestrator_patterns({})
+            patterns_response = await self.tool_dreamwalker_patterns({})
             patterns = {p['name']: p for p in patterns_response['patterns']}
 
             if pattern not in patterns:
@@ -1064,8 +1070,8 @@ class UnifiedMCPServer:
         """
         return [
             {
-                "name": "orchestrate_research",
-                "description": "Execute Beltalowda hierarchical research workflow with multi-tier synthesis",
+                "name": "dream_orchestrate_research",
+                "description": "Execute Dream Cascade hierarchical research workflow with three-tier synthesis",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -1115,8 +1121,8 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "orchestrate_search",
-                "description": "Execute Swarm multi-agent search workflow with specialized agent types",
+                "name": "dream_orchestrate_search",
+                "description": "Execute Dream Swarm multi-agent search workflow with specialized agent types",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -1163,7 +1169,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "get_orchestration_status",
+                "name": "dreamwalker_status",
                 "description": "Get status of a running or completed orchestration",
                 "inputSchema": {
                     "type": "object",
@@ -1177,7 +1183,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "cancel_orchestration",
+                "name": "dreamwalker_cancel",
                 "description": "Cancel a running orchestration",
                 "inputSchema": {
                     "type": "object",
@@ -1191,15 +1197,15 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "list_orchestrator_patterns",
-                "description": "List available orchestrator patterns (Beltalowda, Swarm, etc.)",
+                "name": "dreamwalker_patterns",
+                "description": "List available orchestrator patterns (Dream Cascade, Dream Swarm, etc.)",
                 "inputSchema": {
                     "type": "object",
                     "properties": {}
                 }
             },
             {
-                "name": "list_registered_tools",
+                "name": "dreamwalker_list_tools",
                 "description": "List tools registered in the tool registry",
                 "inputSchema": {
                     "type": "object",
@@ -1217,7 +1223,7 @@ class UnifiedMCPServer:
                 }
             },
             {
-                "name": "execute_registered_tool",
+                "name": "dreamwalker_execute_tool",
                 "description": "Execute a tool registered in the tool registry",
                 "inputSchema": {
                     "type": "object",
@@ -1245,15 +1251,15 @@ class UnifiedMCPServer:
         """
         resources = [
             {
-                "uri": "orchestrator://beltalowda/info",
-                "name": "Beltalowda Orchestrator Info",
-                "description": "Metadata about Beltalowda hierarchical research pattern",
+                "uri": "orchestrator://dream-cascade/info",
+                "name": "Dream Cascade Orchestrator Info",
+                "description": "Metadata about Dream Cascade hierarchical research pattern",
                 "mimeType": "application/json"
             },
             {
-                "uri": "orchestrator://swarm/info",
-                "name": "Swarm Orchestrator Info",
-                "description": "Metadata about Swarm multi-agent search pattern",
+                "uri": "orchestrator://dream-swarm/info",
+                "name": "Dream Swarm Orchestrator Info",
+                "description": "Metadata about Dream Swarm multi-agent search pattern",
                 "mimeType": "application/json"
             }
         ]

@@ -12,7 +12,171 @@ Usage:
     response = provider.analyze_image(img_bytes, "Describe this image")
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Any, List, Tuple
+
+
+# Provider capability matrix
+PROVIDER_CAPABILITIES = {
+    'openai': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': True,  # DALL-E
+        'vision': True,             # GPT-4V
+        'tts': False,
+        'embedding': True
+    },
+    'anthropic': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,             # Claude 3.5
+        'tts': False,
+        'embedding': False
+    },
+    'xai': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': True,  # Aurora
+        'vision': True,             # Grok
+        'tts': False,
+        'embedding': False
+    },
+    'mistral': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,  # Pixtral Large and Pixtral 12B
+        'tts': False,
+        'embedding': True
+    },
+    'cohere': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': False,
+        'tts': False,
+        'embedding': True
+    },
+    'gemini': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,  # Gemini 2.0 Flash and Pro support vision
+        'tts': False,
+        'embedding': True
+    },
+    'perplexity': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,   # Sonar Pro and Sonar support vision
+        'tts': False,
+        'embedding': False
+    },
+    'groq': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': False,
+        'tts': False,
+        'embedding': False
+    },
+    'huggingface': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': True,  # Stable Diffusion and others
+        'vision': True,             # Various vision models
+        'tts': False,
+        'embedding': True
+    },
+    'manus': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,
+        'tts': False,
+        'embedding': False
+    },
+    'elevenlabs': {
+        'chat': False,
+        'streaming': False,
+        'image_generation': False,
+        'vision': False,
+        'tts': True,                # Primary purpose
+        'embedding': False
+    },
+    'claude_code': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,             # Inherits from AnthropicProvider
+        'tts': False,
+        'embedding': False
+    },
+    'ollama': {
+        'chat': True,
+        'streaming': True,
+        'image_generation': False,
+        'vision': True,             # Via vision models (llava, bakllava, etc.)
+        'tts': False,
+        'embedding': True           # Ollama supports embedding models
+    }
+}
+
+
+# Model complexity tiers for cost optimization (Updated December 2025)
+COMPLEXITY_TIERS = {
+    'openai': {
+        'simple': 'gpt-4.1-nano',
+        'medium': 'gpt-4.1',
+        'complex': 'gpt-5'
+    },
+    'anthropic': {
+        'simple': 'claude-3-5-haiku-20241022',
+        'medium': 'claude-sonnet-4-5-20250929',
+        'complex': 'claude-sonnet-4-5-20250929'
+    },
+    'xai': {
+        'simple': 'grok-3-mini',
+        'medium': 'grok-3',
+        'complex': 'grok-4'
+    },
+    'groq': {
+        'simple': 'llama-3.3-70b-versatile',
+        'medium': 'llama-3.3-70b-versatile',
+        'complex': 'llama-3.3-70b-versatile'
+    },
+    'mistral': {
+        'simple': 'ministral-3b-latest',
+        'medium': 'mistral-large-latest',
+        'complex': 'mistral-large-latest'
+    },
+    'gemini': {
+        'simple': 'gemini-2.0-flash',
+        'medium': 'gemini-2.0-pro',
+        'complex': 'gemini-2.0-pro'
+    },
+    'cohere': {
+        'simple': 'command-r',
+        'medium': 'command-r-plus',
+        'complex': 'command-r-plus'
+    },
+    'perplexity': {
+        'simple': 'llama-3.1-sonar-small-128k-online',
+        'medium': 'llama-3.1-sonar-large-128k-online',
+        'complex': 'llama-3.1-sonar-huge-128k-online'
+    },
+    'huggingface': {
+        'simple': 'microsoft/Phi-3-mini-4k-instruct',
+        'medium': 'mistralai/Mixtral-8x7B-Instruct-v0.1',
+        'complex': 'meta-llama/Llama-3.3-70B-Instruct'
+    },
+    'ollama': {
+        'simple': 'llama3.2',
+        'medium': 'llama3.1',
+        'complex': 'llama3.1:70b'
+    }
+}
 
 
 class ProviderFactory:
@@ -116,7 +280,201 @@ class ProviderFactory:
         except ImportError:
             pass
 
+        try:
+            from .claude_code_provider import ClaudeCodeProvider
+            providers['claude_code'] = ClaudeCodeProvider
+        except ImportError:
+            pass
+
+        try:
+            from .ollama_provider import OllamaProvider
+            providers['ollama'] = OllamaProvider
+        except ImportError:
+            pass
+
         return providers
+
+    @classmethod
+    def create_provider(cls, provider_name: str, api_key: str, model: Optional[str] = None):
+        """
+        Create a provider instance with explicit API key.
+
+        Args:
+            provider_name: Name of the provider
+            api_key: API key for the provider
+            model: Optional model name
+
+        Returns:
+            Provider instance (not cached)
+
+        Raises:
+            ValueError: If provider_name is not recognized
+        """
+        provider_classes = cls._get_provider_classes()
+
+        if provider_name not in provider_classes:
+            available = list(provider_classes.keys())
+            raise ValueError(
+                f"Unknown provider: {provider_name}. "
+                f"Available providers: {', '.join(available)}"
+            )
+
+        return provider_classes[provider_name](api_key=api_key, model=model)
+
+    @classmethod
+    def get_provider_capabilities(cls, provider_name: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get capability matrix for providers.
+
+        Args:
+            provider_name: Specific provider, or None for all
+
+        Returns:
+            Dict with capability flags (chat, streaming, image_generation, vision, tts, embedding)
+
+        Example:
+            # Check if OpenAI supports vision
+            caps = ProviderFactory.get_provider_capabilities('openai')
+            if caps['vision']:
+                provider = ProviderFactory.get_provider('openai')
+                result = provider.analyze_image(image, prompt)
+
+            # Get all capabilities
+            all_caps = ProviderFactory.get_provider_capabilities()
+            vision_providers = [p for p, c in all_caps.items() if c['vision']]
+        """
+        if provider_name:
+            return PROVIDER_CAPABILITIES.get(provider_name, {}).copy()
+        return {k: v.copy() for k, v in PROVIDER_CAPABILITIES.items()}
+
+    @classmethod
+    def find_providers_with_capability(cls, capability: str) -> List[str]:
+        """
+        Find all providers that support a specific capability.
+
+        Args:
+            capability: One of: chat, streaming, image_generation, vision, tts, embedding
+
+        Returns:
+            List of provider names supporting the capability
+
+        Example:
+            vision_providers = ProviderFactory.find_providers_with_capability('vision')
+            # Returns: ['openai', 'anthropic', 'xai', 'huggingface', 'manus', 'claude_code']
+
+            tts_providers = ProviderFactory.find_providers_with_capability('tts')
+            # Returns: ['elevenlabs']
+        """
+        return [
+            provider_name
+            for provider_name, caps in PROVIDER_CAPABILITIES.items()
+            if caps.get(capability, False)
+        ]
+
+    @classmethod
+    def select_model_by_complexity(
+        cls,
+        query: str,
+        provider: str,
+        budget_tier: str = 'balanced'
+    ) -> Tuple[str, Dict[str, Any]]:
+        """
+        Select optimal model based on query complexity.
+
+        Args:
+            query: The user query or task
+            provider: Provider name
+            budget_tier: 'cheap', 'balanced', or 'premium'
+
+        Returns:
+            Tuple of (model_name, metadata_dict)
+
+        Example:
+            model, meta = ProviderFactory.select_model_by_complexity(
+                "What is Python?",
+                "openai"
+            )
+            # Returns: ('gpt-4o-mini', {'complexity': 'simple', 'cost_tier': 'low'})
+        """
+        # Detect complexity
+        complexity = cls._detect_query_complexity(query)
+
+        # Adjust for budget tier
+        if budget_tier == 'cheap' and complexity == 'medium':
+            complexity = 'simple'
+        elif budget_tier == 'premium' and complexity == 'simple':
+            complexity = 'medium'
+
+        # Get model from tiers
+        if provider not in COMPLEXITY_TIERS:
+            raise ValueError(f"No complexity tiers defined for provider: {provider}")
+
+        model = COMPLEXITY_TIERS[provider][complexity]
+
+        metadata = {
+            'complexity': complexity,
+            'cost_tier': 'low' if complexity == 'simple' else 'medium' if complexity == 'medium' else 'high',
+            'budget_tier': budget_tier
+        }
+
+        return model, metadata
+
+    @classmethod
+    def _detect_query_complexity(cls, query: str) -> str:
+        """
+        Detect query complexity based on heuristics.
+
+        Args:
+            query: The user query
+
+        Returns:
+            'simple', 'medium', or 'complex'
+        """
+        query_lower = query.lower()
+
+        # Simple indicators
+        simple_keywords = [
+            'what is', 'define', 'basic', 'simple', 'quick',
+            'tell me', 'list', 'name', 'who is', 'when'
+        ]
+
+        # Complex indicators
+        complex_keywords = [
+            'optimize', 'architect', 'design', 'comprehensive',
+            'research', 'analyze thoroughly', 'detailed analysis',
+            'compare and contrast', 'evaluate', 'implement',
+            'create system', 'build', 'develop'
+        ]
+
+        # Medium indicators
+        medium_keywords = [
+            'explain', 'compare', 'analyze', 'how does',
+            'why', 'describe', 'summarize', 'review'
+        ]
+
+        # Check for code snippets
+        has_code = '```' in query or 'def ' in query or 'class ' in query
+
+        # Word count
+        word_count = len(query.split())
+
+        # Simple query detection
+        if any(keyword in query_lower for keyword in simple_keywords) and word_count < 15:
+            return 'simple'
+
+        # Complex query detection
+        if any(keyword in query_lower for keyword in complex_keywords) or word_count > 50 or has_code:
+            return 'complex'
+
+        # Medium query detection
+        if any(keyword in query_lower for keyword in medium_keywords) or word_count > 20:
+            return 'medium'
+
+        # Default to simple for short queries
+        if word_count < 10:
+            return 'simple'
+
+        return 'medium'
 
     @classmethod
     def clear_cache(cls, provider_name: Optional[str] = None):

@@ -4,6 +4,7 @@ Data fetching utilities for external APIs
 This module provides clients for common data sources used across projects.
 """
 
+from .factory import DataFetchingFactory
 from .census_client import CensusClient
 from .arxiv_client import ArxivClient, ArxivPaper, search_arxiv, get_paper_by_id
 from .archive_client import (
@@ -27,8 +28,26 @@ from .openlibrary_client import OpenLibraryClient
 from .nasa_client import NASAClient
 from .youtube_client import YouTubeClient
 from .finance_client import FinanceClient
+from .pubmed_client import (
+    PubMedClient,
+    PubMedArticle,
+    search_pubmed,
+    get_article_by_pmid,
+)
+from .wolfram_client import (
+    WolframAlphaClient,
+    WolframResult,
+    wolfram_query,
+    wolfram_calculate,
+)
+from .archive_client import MultiArchiveClient, get_archive
+
+# Alias for documentation compatibility
+ClientFactory = DataFetchingFactory
 
 __all__ = [
+    "DataFetchingFactory",
+    "ClientFactory",
     "CensusClient",
     "ArxivClient",
     "ArxivPaper",
@@ -51,4 +70,14 @@ __all__ = [
     "NASAClient",
     "YouTubeClient",
     "FinanceClient",
+    "PubMedClient",
+    "PubMedArticle",
+    "search_pubmed",
+    "get_article_by_pmid",
+    "WolframAlphaClient",
+    "WolframResult",
+    "wolfram_query",
+    "wolfram_calculate",
+    "MultiArchiveClient",
+    "get_archive",
 ]

@@ -13,7 +13,7 @@ Author: Luke Steuber
 """
 
 import requests
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class OpenLibraryClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             books = []
             for doc in data.get('docs', []):
                 books.append({
@@ -64,7 +64,7 @@ class OpenLibraryClient:
                     "key": doc.get("key"),
                     "cover_id": doc.get("cover_i")
                 })
-            
+
             return {
                 "query": query,
                 "num_found": data.get('numFound', 0),
@@ -92,11 +92,11 @@ class OpenLibraryClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             book_data = data.get(f'ISBN:{isbn}', {})
             if not book_data:
                 return {"error": "Book not found"}
-            
+
             return {
                 "title": book_data.get("title"),
                 "authors": [a.get("name") for a in book_data.get("authors", [])],
@@ -125,14 +125,14 @@ class OpenLibraryClient:
             # Ensure key format
             if not author_key.startswith('/authors/'):
                 author_key = f'/authors/{author_key}'
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}{author_key}.json",
                 timeout=30
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "name": data.get("name"),
                 "birth_date": data.get("birth_date"),
@@ -165,7 +165,7 @@ class OpenLibraryClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             books = []
             for work in data.get('works', []):
                 books.append({
@@ -175,7 +175,7 @@ class OpenLibraryClient:
                     "key": work.get("key"),
                     "cover_id": work.get("cover_id")
                 })
-            
+
             return {
                 "subject": subject,
                 "work_count": data.get('work_count', 0),

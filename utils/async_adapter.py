@@ -32,7 +32,6 @@ import asyncio
 import concurrent.futures
 from typing import TypeVar, Callable, AsyncGenerator, Generator, Any, Optional
 from functools import wraps
-import threading
 
 
 T = TypeVar('T')

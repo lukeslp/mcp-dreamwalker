@@ -4,26 +4,14 @@ Data Fetching MCP Server
 Exposes shared.data_fetching capabilities through MCP protocol.
 
 Tools provided:
-- fetch_census_acs: Fetch American Community Survey data
-- fetch_census_saipe: Fetch poverty estimates
-- list_census_variables: Search Census variable catalog
-- search_arxiv: Search arXiv papers
-- search_semantic_scholar: Search research papers
-- get_semantic_scholar_paper: Get paper details
-- wayback_search: Search Wayback Machine
-- wayback_available_snapshots: List available snapshots
-- wikipedia_search: Search Wikipedia articles
-- wikipedia_get_summary: Get article summary
-- wikipedia_get_full_content: Get full article content
-- weather_get_current: Get current weather conditions (NOAA)
-- weather_get_forecast: Get weather forecast (NOAA)
-- weather_get_alerts: Get weather alerts by state (NOAA)
-- youtube_search_videos: Search YouTube videos
-- youtube_channel_statistics: Get channel stats
-- youtube_playlist_items: List playlist videos
-- news_top_headlines: Get top news headlines
-- news_search: Search news articles
-- news_sources: List news sources
+- dream_of_census_acs: Fetch American Community Survey data
+- dream_of_census_saipe: Fetch poverty estimates
+- dream_of_census_variables: Search Census variable catalog
+- dream_of_arxiv: Search arXiv papers
+- dream_of_semantic_scholar: Search research papers
+- dream_of_semantic_scholar_paper: Get paper details
+- dream_of_wayback: Search Wayback Machine
+- dream_of_wayback_snapshots: List available snapshots
 
 Resources provided:
 - census://variables/{table}: Census variable catalog
@@ -31,21 +19,15 @@ Resources provided:
 - archive://snapshot/{url}/{timestamp}: Wayback snapshot metadata
 """
 
-import json
 import logging
-import sys
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 # Import from shared library
+import sys
 sys.path.insert(0, '/home/coolhand/shared')
-
+from data_fetching import CensusClient, ArxivClient, SemanticScholarClient, ArchiveClient
 from config import ConfigManager
-from data_fetching import ArxivClient, ArchiveClient, CensusClient, SemanticScholarClient
-from data_fetching.wikipedia_client import WikipediaClient
-from data_fetching.weather_client import WeatherClient
-from data_fetching.youtube_client import YouTubeClient
-from data_fetching.news_client import NewsClient
 
 logger = logging.getLogger(__name__)
 
@@ -71,10 +53,6 @@ class DataServer:
         self._arxiv_client = None
         self._semantic_scholar_client = None
         self._archive_client = None
-        self._wikipedia_client = None
-        self._weather_client = None
-        self._youtube_client = None
-        self._news_client = None
 
     def get_census_client(self) -> CensusClient:
         """Get or create Census client."""
@@ -104,43 +82,13 @@ class DataServer:
             self._archive_client = ArchiveClient()
         return self._archive_client
 
-    def get_wikipedia_client(self) -> WikipediaClient:
-        """Get or create Wikipedia client."""
-        if self._wikipedia_client is None:
-            self._wikipedia_client = WikipediaClient()
-        return self._wikipedia_client
-
-    def get_weather_client(self) -> WeatherClient:
-        """Get or create Weather client."""
-        if self._weather_client is None:
-            self._weather_client = WeatherClient()
-        return self._weather_client
-
-    def get_youtube_client(self) -> YouTubeClient:
-        """Get or create YouTube client."""
-        if self._youtube_client is None:
-            api_key = self.config.get('YOUTUBE_API_KEY')
-            if not api_key:
-                raise RuntimeError("YOUTUBE_API_KEY not configured")
-            self._youtube_client = YouTubeClient(api_key=api_key)
-        return self._youtube_client
-
-    def get_news_client(self) -> NewsClient:
-        """Get or create News client."""
-        if self._news_client is None:
-            api_key = self.config.get('NEWS_API_KEY')
-            if not api_key:
-                raise RuntimeError("NEWS_API_KEY not configured")
-            self._news_client = NewsClient(api_key=api_key)
-        return self._news_client
-
     # -------------------------------------------------------------------------
     # MCP Tools - Census Bureau
     # -------------------------------------------------------------------------
 
-    def tool_fetch_census_acs(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_census_acs(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: fetch_census_acs
+        MCP Tool: dream_of_census_acs
 
         Fetch American Community Survey (ACS) demographic data.
 
@@ -187,15 +135,15 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in fetch_census_acs: {e}")
+            logger.exception(f"Error in dream_of_census_acs: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_fetch_census_saipe(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_census_saipe(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: fetch_census_saipe
+        MCP Tool: dream_of_census_saipe
 
         Fetch Small Area Income and Poverty Estimates (SAIPE).
 
@@ -237,15 +185,15 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in fetch_census_saipe: {e}")
+            logger.exception(f"Error in dream_of_census_saipe: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_list_census_variables(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_census_variables(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: list_census_variables
+        MCP Tool: dream_of_census_variables
 
         Search Census variable catalog.
 
@@ -266,7 +214,7 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in list_census_variables: {e}")
+            logger.exception(f"Error in dream_of_census_variables: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -276,9 +224,9 @@ class DataServer:
     # MCP Tools - arXiv
     # -------------------------------------------------------------------------
 
-    def tool_search_arxiv(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_arxiv(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: search_arxiv
+        MCP Tool: dream_of_arxiv
 
         Search arXiv for academic papers.
 
@@ -328,7 +276,7 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in search_arxiv: {e}")
+            logger.exception(f"Error in dream_of_arxiv: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -338,9 +286,9 @@ class DataServer:
     # MCP Tools - Semantic Scholar
     # -------------------------------------------------------------------------
 
-    def tool_search_semantic_scholar(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_semantic_scholar(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: search_semantic_scholar
+        MCP Tool: dream_of_semantic_scholar
 
         Search Semantic Scholar for research papers.
 
@@ -383,15 +331,15 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in search_semantic_scholar: {e}")
+            logger.exception(f"Error in dream_of_semantic_scholar: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_get_semantic_scholar_paper(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_semantic_scholar_paper(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: get_semantic_scholar_paper
+        MCP Tool: dream_of_semantic_scholar_paper
 
         Get detailed information about a specific paper.
 
@@ -429,7 +377,7 @@ class DataServer:
                 }
 
         except Exception as e:
-            logger.exception(f"Error in get_semantic_scholar_paper: {e}")
+            logger.exception(f"Error in dream_of_semantic_scholar_paper: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -439,9 +387,9 @@ class DataServer:
     # MCP Tools - Internet Archive / Wayback Machine
     # -------------------------------------------------------------------------
 
-    def tool_wayback_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_wayback(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: wayback_search
+        MCP Tool: dream_of_wayback
 
         Get the most recent archived snapshot of a URL.
 
@@ -482,15 +430,15 @@ class DataServer:
                 }
 
         except Exception as e:
-            logger.exception(f"Error in wayback_search: {e}")
+            logger.exception(f"Error in dream_of_wayback: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
 
-    def tool_wayback_available_snapshots(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def tool_dream_of_wayback_snapshots(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: wayback_available_snapshots
+        MCP Tool: dream_of_wayback_snapshots
 
         List all available snapshots for a URL.
 
@@ -536,7 +484,336 @@ class DataServer:
             }
 
         except Exception as e:
-            logger.exception(f"Error in wayback_available_snapshots: {e}")
+            logger.exception(f"Error in dream_of_wayback_snapshots: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - Finance (Alpha Vantage)
+    # -------------------------------------------------------------------------
+
+    def get_finance_client(self) -> 'FinanceClient':
+        """Get or create Finance client."""
+        if not hasattr(self, '_finance_client') or self._finance_client is None:
+            from data_fetching import FinanceClient
+            self._finance_client = FinanceClient()
+        return self._finance_client
+
+    def tool_dream_of_finance_stock(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_finance_stock
+        
+        Get stock market data from Alpha Vantage.
+        
+        Arguments:
+            symbol (str): Stock ticker symbol (e.g., "AAPL")
+            interval (str, optional): Time interval (1min, 5min, 15min, 30min, 60min, daily)
+            
+        Returns:
+            {success: bool, data: Dict, metadata: Dict}
+        """
+        try:
+            symbol = arguments.get('symbol')
+            if not symbol:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: symbol"
+                }
+            
+            client = self.get_finance_client()
+            interval = arguments.get('interval', 'daily')
+            
+            if interval == 'daily':
+                data = client.get_daily(symbol)
+            else:
+                data = client.get_intraday(symbol, interval=interval)
+            
+            return {
+                "success": True,
+                "data": data,
+                "metadata": {
+                    "symbol": symbol,
+                    "interval": interval,
+                    "source": "Alpha Vantage",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_finance_stock: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - GitHub
+    # -------------------------------------------------------------------------
+
+    def get_github_client(self) -> 'GitHubClient':
+        """Get or create GitHub client."""
+        if not hasattr(self, '_github_client') or self._github_client is None:
+            from data_fetching import GitHubClient
+            self._github_client = GitHubClient()
+        return self._github_client
+
+    def tool_dream_of_github_repos(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_github_repos
+        
+        Search GitHub repositories.
+        
+        Arguments:
+            query (str): Search query
+            sort (str, optional): Sort by (stars, forks, updated)
+            per_page (int, optional): Results per page (default: 30)
+            
+        Returns:
+            {success: bool, repositories: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+            
+            client = self.get_github_client()
+            result = client.search_repositories(
+                query=query,
+                sort=arguments.get('sort', 'stars'),
+                per_page=arguments.get('per_page', 30)
+            )
+            
+            return {
+                "success": True,
+                "repositories": result.get('items', []),
+                "total_count": result.get('total_count', 0),
+                "metadata": {
+                    "query": query,
+                    "source": "GitHub API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_github_repos: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - NASA
+    # -------------------------------------------------------------------------
+
+    def get_nasa_client(self) -> 'NASAClient':
+        """Get or create NASA client."""
+        if not hasattr(self, '_nasa_client') or self._nasa_client is None:
+            from data_fetching import NASAClient
+            self._nasa_client = NASAClient()
+        return self._nasa_client
+
+    def tool_dream_of_nasa_apod(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_nasa_apod
+        
+        Get NASA Astronomy Picture of the Day.
+        
+        Arguments:
+            date (str, optional): Date in YYYY-MM-DD format (default: today)
+            count (int, optional): Number of random APODs
+            
+        Returns:
+            {success: bool, apod: Dict, metadata: Dict}
+        """
+        try:
+            client = self.get_nasa_client()
+            apod = client.get_apod(
+                date=arguments.get('date'),
+                count=arguments.get('count')
+            )
+            
+            return {
+                "success": True,
+                "apod": apod,
+                "metadata": {
+                    "source": "NASA APOD API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_nasa_apod: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - News API
+    # -------------------------------------------------------------------------
+
+    def get_news_client(self) -> 'NewsClient':
+        """Get or create News client."""
+        if not hasattr(self, '_news_client') or self._news_client is None:
+            from data_fetching import NewsClient
+            self._news_client = NewsClient()
+        return self._news_client
+
+    def tool_dream_of_news(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_news
+        
+        Get top news headlines.
+        
+        Arguments:
+            query (str, optional): Search query
+            country (str, optional): Country code (default: us)
+            category (str, optional): Category (business, technology, etc.)
+            page_size (int, optional): Results per page (default: 20)
+            
+        Returns:
+            {success: bool, articles: List[Dict], metadata: Dict}
+        """
+        try:
+            client = self.get_news_client()
+            
+            if arguments.get('query'):
+                result = client.search_everything(
+                    query=arguments['query'],
+                    page_size=arguments.get('page_size', 20)
+                )
+            else:
+                result = client.get_top_headlines(
+                    country=arguments.get('country', 'us'),
+                    category=arguments.get('category'),
+                    page_size=arguments.get('page_size', 20)
+                )
+            
+            return {
+                "success": True,
+                "articles": result.get('articles', []),
+                "total_results": result.get('totalResults', 0),
+                "metadata": {
+                    "source": "News API",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_news: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - OpenLibrary
+    # -------------------------------------------------------------------------
+
+    def get_openlibrary_client(self) -> 'OpenLibraryClient':
+        """Get or create OpenLibrary client."""
+        if not hasattr(self, '_openlibrary_client') or self._openlibrary_client is None:
+            from data_fetching import OpenLibraryClient
+            self._openlibrary_client = OpenLibraryClient()
+        return self._openlibrary_client
+
+    def tool_dream_of_books(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_books
+        
+        Search books via OpenLibrary.
+        
+        Arguments:
+            query (str): Search query
+            limit (int, optional): Max results (default: 10)
+            
+        Returns:
+            {success: bool, books: List[Dict], metadata: Dict}
+        """
+        try:
+            query = arguments.get('query')
+            if not query:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: query"
+                }
+            
+            client = self.get_openlibrary_client()
+            books = client.search(query=query, limit=arguments.get('limit', 10))
+            
+            return {
+                "success": True,
+                "books": books,
+                "count": len(books),
+                "metadata": {
+                    "query": query,
+                    "source": "OpenLibrary",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_books: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
+    # -------------------------------------------------------------------------
+    # MCP Tools - Weather
+    # -------------------------------------------------------------------------
+
+    def get_weather_client(self) -> 'WeatherClient':
+        """Get or create Weather client."""
+        if not hasattr(self, '_weather_client') or self._weather_client is None:
+            from data_fetching import WeatherClient
+            self._weather_client = WeatherClient()
+        return self._weather_client
+
+    def tool_dream_of_weather(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        MCP Tool: dream_of_weather
+        
+        Get current weather for a location.
+        
+        Arguments:
+            location (str): City name or location
+            units (str, optional): Units (metric, imperial, standard)
+            
+        Returns:
+            {success: bool, weather: Dict, metadata: Dict}
+        """
+        try:
+            location = arguments.get('location')
+            if not location:
+                return {
+                    "success": False,
+                    "error": "Missing required argument: location"
+                }
+            
+            client = self.get_weather_client()
+            weather = client.get_current_weather(
+                location=location,
+                units=arguments.get('units', 'metric')
+            )
+            
+            return {
+                "success": True,
+                "weather": weather,
+                "metadata": {
+                    "location": location,
+                    "source": "OpenWeatherMap",
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+            }
+        
+        except Exception as e:
+            logger.exception(f"Error in dream_of_weather: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -546,18 +823,25 @@ class DataServer:
     # MCP Tools - Wikipedia
     # -------------------------------------------------------------------------
 
-    def tool_wikipedia_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def get_wikipedia_client(self) -> 'WikipediaClient':
+        """Get or create Wikipedia client."""
+        if not hasattr(self, '_wikipedia_client') or self._wikipedia_client is None:
+            from data_fetching import WikipediaClient
+            self._wikipedia_client = WikipediaClient()
+        return self._wikipedia_client
+
+    def tool_dream_of_wikipedia(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: wikipedia_search
-
-        Search Wikipedia articles by keyword.
-
+        MCP Tool: dream_of_wikipedia
+        
+        Search Wikipedia and get article content.
+        
         Arguments:
-            query (str): Search keywords
-            limit (int, optional): Max results (default: 10, max: 25)
-
+            query (str): Search query
+            sentences (int, optional): Number of sentences in summary (default: 3)
+            
         Returns:
-            {success: bool, results: List[Dict], metadata: Dict}
+            {success: bool, article: Dict, metadata: Dict}
         """
         try:
             query = arguments.get('query')
@@ -566,291 +850,25 @@ class DataServer:
                     "success": False,
                     "error": "Missing required argument: query"
                 }
-
-            limit = arguments.get('limit', 10)
-            limit = min(limit, 25)  # Cap at 25
-
+            
             client = self.get_wikipedia_client()
-            result = client.search(query=query, limit=limit)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
+            article = client.search(
+                query=query,
+                sentences=arguments.get('sentences', 3)
+            )
+            
             return {
                 "success": True,
-                "results": result.get('results', []),
+                "article": article,
                 "metadata": {
                     "query": query,
-                    "result_count": result.get('count', 0),
                     "source": "Wikipedia",
                     "timestamp": datetime.utcnow().isoformat()
                 }
             }
-
+        
         except Exception as e:
-            logger.exception(f"Error in wikipedia_search: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_wikipedia_get_summary(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: wikipedia_get_summary
-
-        Get a concise summary of a Wikipedia article.
-
-        Arguments:
-            title (str): Wikipedia article title
-
-        Returns:
-            {success: bool, article: Dict}
-        """
-        try:
-            title = arguments.get('title')
-            if not title:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: title"
-                }
-
-            client = self.get_wikipedia_client()
-            result = client.get_summary(title=title)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "article": {
-                    "title": result.get('title'),
-                    "summary": result.get('summary'),
-                    "page_id": result.get('page_id'),
-                    "image": result.get('image'),
-                    "url": result.get('url')
-                },
-                "metadata": {
-                    "source": "Wikipedia",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in wikipedia_get_summary: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_wikipedia_get_full_content(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: wikipedia_get_full_content
-
-        Retrieve the full content of a Wikipedia article.
-
-        Arguments:
-            title (str): Wikipedia article title
-
-        Returns:
-            {success: bool, article: Dict}
-        """
-        try:
-            title = arguments.get('title')
-            if not title:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: title"
-                }
-
-            client = self.get_wikipedia_client()
-            result = client.get_full_content(title=title)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "article": {
-                    "title": result.get('title'),
-                    "content": result.get('content'),
-                    "page_id": result.get('page_id'),
-                    "word_count": result.get('word_count'),
-                    "url": result.get('url')
-                },
-                "metadata": {
-                    "source": "Wikipedia",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in wikipedia_get_full_content: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    # -------------------------------------------------------------------------
-    # MCP Tools - Weather (NOAA)
-    # -------------------------------------------------------------------------
-
-    def tool_weather_get_current(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: weather_get_current
-
-        Get current weather conditions for coordinates.
-
-        Arguments:
-            latitude (float): Latitude in decimal degrees
-            longitude (float): Longitude in decimal degrees
-
-        Returns:
-            {success: bool, location: Dict, current: Dict, metadata: Dict}
-        """
-        try:
-            latitude = arguments.get('latitude')
-            longitude = arguments.get('longitude')
-
-            if latitude is None or longitude is None:
-                return {
-                    "success": False,
-                    "error": "Missing required arguments: latitude and longitude"
-                }
-
-            client = self.get_weather_client()
-            result = client.get_current_weather(latitude=latitude, longitude=longitude)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "location": result.get('location', {}),
-                "current": result.get('current', {}),
-                "metadata": {
-                    "source": "NOAA Weather Service",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in weather_get_current: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_weather_get_forecast(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: weather_get_forecast
-
-        Get multi-day weather forecast for coordinates.
-
-        Arguments:
-            latitude (float): Latitude in decimal degrees
-            longitude (float): Longitude in decimal degrees
-            periods (int, optional): Number of forecast periods (default: 7, max: 14)
-
-        Returns:
-            {success: bool, location: Dict, forecast: List[Dict], metadata: Dict}
-        """
-        try:
-            latitude = arguments.get('latitude')
-            longitude = arguments.get('longitude')
-
-            if latitude is None or longitude is None:
-                return {
-                    "success": False,
-                    "error": "Missing required arguments: latitude and longitude"
-                }
-
-            periods = arguments.get('periods', 7)
-            periods = max(1, min(periods, 14))  # Cap between 1-14
-
-            client = self.get_weather_client()
-            result = client.get_forecast(latitude=latitude, longitude=longitude, periods=periods)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "location": result.get('location', {}),
-                "forecast": result.get('forecast', []),
-                "metadata": {
-                    "periods": len(result.get('forecast', [])),
-                    "source": "NOAA Weather Service",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in weather_get_forecast: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_weather_get_alerts(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: weather_get_alerts
-
-        Get active weather alerts for a state.
-
-        Arguments:
-            state (str): Two-letter state code (e.g., CA, NY, OR)
-
-        Returns:
-            {success: bool, state: str, alerts: List[Dict], metadata: Dict}
-        """
-        try:
-            state = arguments.get('state')
-            if not state:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: state"
-                }
-
-            # Ensure uppercase
-            state = state.upper()
-
-            client = self.get_weather_client()
-            result = client.get_alerts(state=state)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "state": state,
-                "alerts": result.get('alerts', []),
-                "metadata": {
-                    "alert_count": result.get('count', 0),
-                    "source": "NOAA Weather Service",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in weather_get_alerts: {e}")
+            logger.exception(f"Error in dream_of_wikipedia: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -860,19 +878,24 @@ class DataServer:
     # MCP Tools - YouTube
     # -------------------------------------------------------------------------
 
-    def tool_youtube_search_videos(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
+    def get_youtube_client(self) -> 'YouTubeClient':
+        """Get or create YouTube client."""
+        if not hasattr(self, '_youtube_client') or self._youtube_client is None:
+            from data_fetching import YouTubeClient
+            self._youtube_client = YouTubeClient()
+        return self._youtube_client
+
+    def tool_dream_of_youtube(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        MCP Tool: youtube_search_videos
-
-        Search for videos on YouTube.
-
+        MCP Tool: dream_of_youtube
+        
+        Search YouTube videos.
+        
         Arguments:
             query (str): Search query
-            max_results (int, optional): Max results (default: 10, max: 25)
-            order (str, optional): Sort order (relevance, date, rating, title, viewCount)
-            safe_search (str, optional): Safety filter (none, moderate, strict)
-            video_duration (str, optional): Duration filter (any, short, medium, long)
-
+            max_results (int, optional): Max results (default: 10)
+            order (str, optional): Sort order (relevance, date, rating, views)
+            
         Returns:
             {success: bool, videos: List[Dict], metadata: Dict}
         """
@@ -883,303 +906,27 @@ class DataServer:
                     "success": False,
                     "error": "Missing required argument: query"
                 }
-
-            max_results = min(arguments.get('max_results', 10), 25)
-            order = arguments.get('order', 'relevance')
-            safe_search = arguments.get('safe_search', 'moderate')
-            video_duration = arguments.get('video_duration')
-
+            
             client = self.get_youtube_client()
-            result = client.search_videos(
+            videos = client.search(
                 query=query,
-                max_results=max_results,
-                order=order,
-                safe_search=safe_search,
-                video_duration=video_duration
+                max_results=arguments.get('max_results', 10),
+                order=arguments.get('order', 'relevance')
             )
-
+            
             return {
                 "success": True,
-                "videos": result.get('videos', []),
+                "videos": videos,
+                "count": len(videos),
                 "metadata": {
                     "query": query,
-                    "result_count": result.get('total_results', 0),
-                    "next_page_token": result.get('next_page_token'),
                     "source": "YouTube Data API",
                     "timestamp": datetime.utcnow().isoformat()
                 }
             }
-
+        
         except Exception as e:
-            logger.exception(f"Error in youtube_search_videos: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_youtube_channel_statistics(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: youtube_channel_statistics
-
-        Fetch statistics and metadata for a YouTube channel.
-
-        Arguments:
-            channel_id (str): YouTube channel ID
-
-        Returns:
-            {success: bool, channel: Dict, metadata: Dict}
-        """
-        try:
-            channel_id = arguments.get('channel_id')
-            if not channel_id:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: channel_id"
-                }
-
-            client = self.get_youtube_client()
-            result = client.get_channel_statistics(channel_id=channel_id)
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "channel": result,
-                "metadata": {
-                    "source": "YouTube Data API",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in youtube_channel_statistics: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_youtube_playlist_items(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: youtube_playlist_items
-
-        List items from a YouTube playlist.
-
-        Arguments:
-            playlist_id (str): YouTube playlist ID
-            max_results (int, optional): Max items (default: 25, max: 25)
-
-        Returns:
-            {success: bool, items: List[Dict], metadata: Dict}
-        """
-        try:
-            playlist_id = arguments.get('playlist_id')
-            if not playlist_id:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: playlist_id"
-                }
-
-            max_results = min(arguments.get('max_results', 25), 25)
-
-            client = self.get_youtube_client()
-            result = client.get_playlist_items(
-                playlist_id=playlist_id,
-                max_results=max_results
-            )
-
-            return {
-                "success": True,
-                "items": result.get('items', []),
-                "metadata": {
-                    "playlist_id": playlist_id,
-                    "result_count": result.get('total_results', 0),
-                    "next_page_token": result.get('next_page_token'),
-                    "source": "YouTube Data API",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in youtube_playlist_items: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    # -------------------------------------------------------------------------
-    # MCP Tools - News
-    # -------------------------------------------------------------------------
-
-    def tool_news_top_headlines(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: news_top_headlines
-
-        Get top news headlines for a country or category.
-
-        Arguments:
-            country (str, optional): ISO country code (default: us)
-            category (str, optional): Category (business, technology, etc.)
-            query (str, optional): Search keywords
-            page_size (int, optional): Max results (default: 20, max: 50)
-
-        Returns:
-            {success: bool, articles: List[Dict], metadata: Dict}
-        """
-        try:
-            country = arguments.get('country', 'us')
-            category = arguments.get('category')
-            query = arguments.get('query')
-            page_size = min(arguments.get('page_size', 20), 50)
-
-            client = self.get_news_client()
-            result = client.get_top_headlines(
-                country=country,
-                category=category,
-                query=query,
-                page_size=page_size
-            )
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "articles": result.get('articles', []),
-                "metadata": {
-                    "total_results": result.get('total_results', 0),
-                    "country": country,
-                    "category": category,
-                    "source": "News API",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in news_top_headlines: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_news_search(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: news_search
-
-        Search news articles across sources.
-
-        Arguments:
-            query (str): Search keywords
-            language (str, optional): Language code (default: en)
-            page_size (int, optional): Max results (default: 20, max: 50)
-            from_date (str, optional): Start date (YYYY-MM-DD)
-            to_date (str, optional): End date (YYYY-MM-DD)
-
-        Returns:
-            {success: bool, articles: List[Dict], metadata: Dict}
-        """
-        try:
-            query = arguments.get('query')
-            if not query:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: query"
-                }
-
-            language = arguments.get('language', 'en')
-            page_size = min(arguments.get('page_size', 20), 50)
-            from_date = arguments.get('from_date')
-            to_date = arguments.get('to_date')
-
-            client = self.get_news_client()
-            result = client.search_everything(
-                query=query,
-                language=language,
-                page_size=page_size,
-                from_date=from_date,
-                to_date=to_date
-            )
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "articles": result.get('articles', []),
-                "metadata": {
-                    "query": query,
-                    "total_results": result.get('total_results', 0),
-                    "language": language,
-                    "source": "News API",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in news_search: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-
-    def tool_news_sources(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        MCP Tool: news_sources
-
-        List available news sources and metadata.
-
-        Arguments:
-            category (str, optional): Filter by category
-            language (str, optional): Filter by language code
-            country (str, optional): Filter by country code
-
-        Returns:
-            {success: bool, sources: List[Dict], metadata: Dict}
-        """
-        try:
-            category = arguments.get('category')
-            language = arguments.get('language')
-            country = arguments.get('country')
-
-            client = self.get_news_client()
-            result = client.get_sources(
-                category=category,
-                language=language,
-                country=country
-            )
-
-            if "error" in result:
-                return {
-                    "success": False,
-                    "error": result["error"]
-                }
-
-            return {
-                "success": True,
-                "sources": result.get('sources', []),
-                "metadata": {
-                    "count": result.get('count', 0),
-                    "filters": {
-                        "category": category,
-                        "language": language,
-                        "country": country
-                    },
-                    "source": "News API",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
-            }
-
-        except Exception as e:
-            logger.exception(f"Error in news_sources: {e}")
+            logger.exception(f"Error in dream_of_youtube: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -1284,7 +1031,7 @@ class DataServer:
             # Parse URI: archive://snapshot/{url}/{timestamp}
             parts = uri.replace('archive://snapshot/', '').split('/')
             url = parts[0]
-            timestamp = parts[1] if len(parts) > 1 else None
+            parts[1] if len(parts) > 1 else None
 
             client = self.get_archive_client()
 
@@ -1327,7 +1074,7 @@ class DataServer:
         return [
             # Census tools
             {
-                "name": "fetch_census_acs",
+                "name": "dream_of_census_acs",
                 "description": "Fetch American Community Survey (ACS) demographic data",
                 "inputSchema": {
                     "type": "object",
@@ -1353,7 +1100,7 @@ class DataServer:
                 }
             },
             {
-                "name": "fetch_census_saipe",
+                "name": "dream_of_census_saipe",
                 "description": "Fetch Small Area Income and Poverty Estimates",
                 "inputSchema": {
                     "type": "object",
@@ -1375,7 +1122,7 @@ class DataServer:
                 }
             },
             {
-                "name": "list_census_variables",
+                "name": "dream_of_census_variables",
                 "description": "Search Census variable catalog",
                 "inputSchema": {
                     "type": "object",
@@ -1393,7 +1140,7 @@ class DataServer:
             },
             # arXiv tools
             {
-                "name": "search_arxiv",
+                "name": "dream_of_arxiv",
                 "description": "Search arXiv for academic papers",
                 "inputSchema": {
                     "type": "object",
@@ -1420,7 +1167,7 @@ class DataServer:
             },
             # Semantic Scholar tools
             {
-                "name": "search_semantic_scholar",
+                "name": "dream_of_semantic_scholar",
                 "description": "Search Semantic Scholar for research papers",
                 "inputSchema": {
                     "type": "object",
@@ -1443,7 +1190,7 @@ class DataServer:
                 }
             },
             {
-                "name": "get_semantic_scholar_paper",
+                "name": "dream_of_semantic_scholar_paper",
                 "description": "Get detailed information about a specific paper",
                 "inputSchema": {
                     "type": "object",
@@ -1463,7 +1210,7 @@ class DataServer:
             },
             # Wayback Machine tools
             {
-                "name": "wayback_search",
+                "name": "dream_of_wayback",
                 "description": "Get the most recent archived snapshot of a URL",
                 "inputSchema": {
                     "type": "object",
@@ -1481,7 +1228,7 @@ class DataServer:
                 }
             },
             {
-                "name": "wayback_available_snapshots",
+                "name": "dream_of_wayback_snapshots",
                 "description": "List all available snapshots for a URL",
                 "inputSchema": {
                     "type": "object",
@@ -1498,112 +1245,153 @@ class DataServer:
                     "required": ["url"]
                 }
             },
-            # Wikipedia tools
+            # Finance tools
             {
-                "name": "wikipedia_search",
-                "description": "Search Wikipedia articles by keyword",
+                "name": "dream_of_finance_stock",
+                "description": "Get stock market data from Alpha Vantage",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "symbol": {
+                            "type": "string",
+                            "description": "Stock ticker symbol (e.g., AAPL)"
+                        },
+                        "interval": {
+                            "type": "string",
+                            "description": "Time interval (1min, 5min, 15min, 30min, 60min, daily)"
+                        }
+                    },
+                    "required": ["symbol"]
+                }
+            },
+            # GitHub tools
+            {
+                "name": "dream_of_github_repos",
+                "description": "Search GitHub repositories",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
                         "query": {
                             "type": "string",
-                            "description": "Search keywords"
+                            "description": "Search query"
                         },
-                        "limit": {
+                        "sort": {
+                            "type": "string",
+                            "description": "Sort by (stars, forks, updated)"
+                        },
+                        "per_page": {
                             "type": "integer",
-                            "description": "Max results (default: 10, max: 25)"
+                            "description": "Results per page (default: 30)"
                         }
                     },
                     "required": ["query"]
                 }
             },
+            # NASA tools
             {
-                "name": "wikipedia_get_summary",
-                "description": "Get a concise summary of a Wikipedia article",
+                "name": "dream_of_nasa_apod",
+                "description": "Get NASA Astronomy Picture of the Day",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "title": {
+                        "date": {
                             "type": "string",
-                            "description": "Wikipedia article title"
+                            "description": "Date in YYYY-MM-DD format (optional)"
+                        },
+                        "count": {
+                            "type": "integer",
+                            "description": "Number of random APODs (optional)"
                         }
-                    },
-                    "required": ["title"]
+                    }
                 }
             },
+            # News tools
             {
-                "name": "wikipedia_get_full_content",
-                "description": "Retrieve the full content of a Wikipedia article",
+                "name": "dream_of_news",
+                "description": "Get top news headlines",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "title": {
+                        "query": {
                             "type": "string",
-                            "description": "Wikipedia article title"
+                            "description": "Search query (optional)"
+                        },
+                        "country": {
+                            "type": "string",
+                            "description": "Country code (default: us)"
+                        },
+                        "category": {
+                            "type": "string",
+                            "description": "Category (business, technology, etc.)"
+                        },
+                        "page_size": {
+                            "type": "integer",
+                            "description": "Results per page (default: 20)"
+                        }
+                    }
+                }
+            },
+            # OpenLibrary tools
+            {
+                "name": "dream_of_books",
+                "description": "Search books via OpenLibrary",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Max results (default: 10)"
                         }
                     },
-                    "required": ["title"]
+                    "required": ["query"]
                 }
             },
             # Weather tools
             {
-                "name": "weather_get_current",
-                "description": "Get current weather conditions for coordinates (NOAA)",
+                "name": "dream_of_weather",
+                "description": "Get current weather for a location",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "latitude": {
-                            "type": "number",
-                            "description": "Latitude in decimal degrees"
-                        },
-                        "longitude": {
-                            "type": "number",
-                            "description": "Longitude in decimal degrees"
-                        }
-                    },
-                    "required": ["latitude", "longitude"]
-                }
-            },
-            {
-                "name": "weather_get_forecast",
-                "description": "Get multi-day weather forecast for coordinates (NOAA)",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "latitude": {
-                            "type": "number",
-                            "description": "Latitude in decimal degrees"
-                        },
-                        "longitude": {
-                            "type": "number",
-                            "description": "Longitude in decimal degrees"
-                        },
-                        "periods": {
-                            "type": "integer",
-                            "description": "Number of forecast periods (default: 7, max: 14)"
-                        }
-                    },
-                    "required": ["latitude", "longitude"]
-                }
-            },
-            {
-                "name": "weather_get_alerts",
-                "description": "Get active weather alerts for a state (NOAA)",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "state": {
+                        "location": {
                             "type": "string",
-                            "description": "Two-letter state code (e.g., CA, NY, OR)"
+                            "description": "City name or location"
+                        },
+                        "units": {
+                            "type": "string",
+                            "description": "Units (metric, imperial, standard)"
                         }
                     },
-                    "required": ["state"]
+                    "required": ["location"]
+                }
+            },
+            # Wikipedia tools
+            {
+                "name": "dream_of_wikipedia",
+                "description": "Search Wikipedia and get article content",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Search query"
+                        },
+                        "sentences": {
+                            "type": "integer",
+                            "description": "Number of sentences in summary (default: 3)"
+                        }
+                    },
+                    "required": ["query"]
                 }
             },
             # YouTube tools
             {
-                "name": "youtube_search_videos",
-                "description": "Search for videos on YouTube",
+                "name": "dream_of_youtube",
+                "description": "Search YouTube videos",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -1613,131 +1401,14 @@ class DataServer:
                         },
                         "max_results": {
                             "type": "integer",
-                            "description": "Max results (default: 10, max: 25)"
+                            "description": "Max results (default: 10)"
                         },
                         "order": {
                             "type": "string",
-                            "description": "Sort order: relevance, date, rating, title, viewCount (default: relevance)"
-                        },
-                        "safe_search": {
-                            "type": "string",
-                            "description": "Safety filter: none, moderate, strict (default: moderate)"
-                        },
-                        "video_duration": {
-                            "type": "string",
-                            "description": "Duration filter: any, short, medium, long (optional)"
+                            "description": "Sort order (relevance, date, rating, views)"
                         }
                     },
                     "required": ["query"]
-                }
-            },
-            {
-                "name": "youtube_channel_statistics",
-                "description": "Fetch statistics and metadata for a YouTube channel",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "channel_id": {
-                            "type": "string",
-                            "description": "YouTube channel ID"
-                        }
-                    },
-                    "required": ["channel_id"]
-                }
-            },
-            {
-                "name": "youtube_playlist_items",
-                "description": "List items from a YouTube playlist",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "playlist_id": {
-                            "type": "string",
-                            "description": "YouTube playlist ID"
-                        },
-                        "max_results": {
-                            "type": "integer",
-                            "description": "Max items (default: 25, max: 25)"
-                        }
-                    },
-                    "required": ["playlist_id"]
-                }
-            },
-            # News tools
-            {
-                "name": "news_top_headlines",
-                "description": "Get top news headlines for a country or category",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "country": {
-                            "type": "string",
-                            "description": "ISO country code (default: us)"
-                        },
-                        "category": {
-                            "type": "string",
-                            "description": "Category (business, technology, health, etc.)"
-                        },
-                        "query": {
-                            "type": "string",
-                            "description": "Search keywords (optional)"
-                        },
-                        "page_size": {
-                            "type": "integer",
-                            "description": "Max results (default: 20, max: 50)"
-                        }
-                    }
-                }
-            },
-            {
-                "name": "news_search",
-                "description": "Search news articles across sources",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Search keywords"
-                        },
-                        "language": {
-                            "type": "string",
-                            "description": "Language code (default: en)"
-                        },
-                        "page_size": {
-                            "type": "integer",
-                            "description": "Max results (default: 20, max: 50)"
-                        },
-                        "from_date": {
-                            "type": "string",
-                            "description": "Start date (YYYY-MM-DD format)"
-                        },
-                        "to_date": {
-                            "type": "string",
-                            "description": "End date (YYYY-MM-DD format)"
-                        }
-                    },
-                    "required": ["query"]
-                }
-            },
-            {
-                "name": "news_sources",
-                "description": "List available news sources and metadata",
-                "inputSchema": {
-                    "type": "object",
-                    "properties": {
-                        "category": {
-                            "type": "string",
-                            "description": "Filter by category (optional)"
-                        },
-                        "language": {
-                            "type": "string",
-                            "description": "Filter by language code (optional)"
-                        },
-                        "country": {
-                            "type": "string",
-                            "description": "Filter by country code (optional)"
-                        }
-                    }
                 }
             }
         ]

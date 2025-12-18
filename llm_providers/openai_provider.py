@@ -3,7 +3,7 @@ OpenAI provider implementation.
 Supports GPT models, DALL-E image generation, and GPT-4 Vision.
 """
 
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Union, Optional
 from pathlib import Path
 from . import BaseLLMProvider, Message, CompletionResponse, ImageResponse, AudioResponse
 import os
@@ -13,7 +13,7 @@ import base64
 class OpenAIProvider(BaseLLMProvider):
     """OpenAI GPT provider."""
 
-    DEFAULT_MODEL = "gpt-4.1"
+    DEFAULT_MODEL = "gpt-5.1"
 
     def __init__(self, api_key: str = None, model: str = None):
         api_key = api_key or os.getenv("OPENAI_API_KEY")
@@ -138,7 +138,7 @@ class OpenAIProvider(BaseLLMProvider):
         Returns:
             CompletionResponse with image analysis
         """
-        model = kwargs.get("model", "gpt-4o")
+        model = kwargs.get("model", "gpt-5.1")
         max_tokens = kwargs.get("max_tokens", 500)
 
         # Convert bytes to base64 if needed
@@ -163,10 +163,14 @@ class OpenAIProvider(BaseLLMProvider):
             }
         ]
 
+        # Use max_completion_tokens for newer models (gpt-5+, o1, o3, o4)
+        # Use max_tokens for older models (gpt-4o, gpt-4-turbo)
+        token_param = "max_completion_tokens" if any(x in model for x in ['gpt-5', 'o1', 'o3', 'o4']) else "max_tokens"
+
         response = self.client.chat.completions.create(
             model=model,
             messages=messages,
-            max_tokens=max_tokens
+            **{token_param: max_tokens}
         )
 
         return CompletionResponse(
@@ -341,4 +345,24 @@ class OpenAIProvider(BaseLLMProvider):
                 "characters": len(text),
                 "size_bytes": len(audio_bytes)
             }
+        )
+
+    async def chat(self, messages=None, system_prompt=None, user_prompt=None, **kwargs) -> CompletionResponse:
+        """
+        Async alias for complete() to support orchestrator compatibility.
+        Orchestrators call await chat(system_prompt=..., user_prompt=...)
+        but providers use complete(messages=[...]).
+        """
+        # Convert orchestrator's system_prompt/user_prompt to messages list
+        if messages is None and (system_prompt or user_prompt):
+            messages = []
+            if system_prompt:
+                messages.append(Message(role="system", content=system_prompt))
+            if user_prompt:
+                messages.append(Message(role="user", content=user_prompt))
+
+        # Run sync complete() in thread pool to make it awaitable
+        import asyncio
+        return await asyncio.get_event_loop().run_in_executor(
+            None, self.complete, messages, **kwargs
         )

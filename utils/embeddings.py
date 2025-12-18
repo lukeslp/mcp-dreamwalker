@@ -34,7 +34,7 @@ Author: Luke Steuber
 import os
 import logging
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Union, Dict, Any
+from typing import List, Optional, Dict, Any
 
 try:
     import numpy as np

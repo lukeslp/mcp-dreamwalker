@@ -14,7 +14,7 @@ Author: Luke Steuber
 
 import os
 import requests
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 import logging
 
@@ -49,12 +49,12 @@ class NASAClient:
         """
         try:
             params = {'api_key': self.api_key}
-            
+
             if count:
                 params['count'] = count
             elif date:
                 params['date'] = date
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}/planetary/apod",
                 params=params,
@@ -62,7 +62,7 @@ class NASAClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             # Handle single vs multiple results
             if isinstance(data, list):
                 return {"apods": data, "count": len(data)}
@@ -99,10 +99,10 @@ class NASAClient:
         """
         try:
             params = {'sol': sol, 'api_key': self.api_key}
-            
+
             if camera:
                 params['camera'] = camera
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}/mars-photos/api/v1/rovers/{rover}/photos",
                 params=params,
@@ -110,7 +110,7 @@ class NASAClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             photos = []
             for photo in data.get('photos', []):
                 photos.append({
@@ -121,7 +121,7 @@ class NASAClient:
                     "earth_date": photo.get("earth_date"),
                     "rover": photo.get("rover", {}).get("name")
                 })
-            
+
             return {
                 "rover": rover,
                 "sol": sol,
@@ -144,7 +144,7 @@ class NASAClient:
 
         Args:
             lat: Latitude
-            lon: Longitude  
+            lon: Longitude
             date: Date in YYYY-MM-DD format
             dim: Image width/height in degrees
 
@@ -158,10 +158,10 @@ class NASAClient:
                 'dim': dim,
                 'api_key': self.api_key
             }
-            
+
             if date:
                 params['date'] = date
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}/planetary/earth/imagery",
                 params=params,
@@ -169,7 +169,7 @@ class NASAClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "date": data.get("date"),
                 "url": data.get("url"),
@@ -195,7 +195,7 @@ class NASAClient:
             start_date = datetime.now().strftime('%Y-%m-%d')
         if not end_date:
             end_date = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
-        
+
         try:
             response = self.session.get(
                 f"{self.BASE_URL}/neo/rest/v1/feed",
@@ -208,7 +208,7 @@ class NASAClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "element_count": data.get("element_count", 0),
                 "near_earth_objects": data.get("near_earth_objects", {}),

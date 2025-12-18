@@ -7,7 +7,7 @@ Allows Cursor to use remote Dreamwalker MCP server as if it were local.
 
 Usage:
     python mcp_http_bridge.py [--url https://dr.eamer.dev/mcp]
-    
+
 Configuration in Cursor:
     {
       "mcpServers": {
@@ -41,12 +41,12 @@ DEFAULT_MCP_URL = "https://dr.eamer.dev/mcp"
 
 class MCPHttpBridge:
     """Bridge between MCP stdio and HTTP protocols."""
-    
+
     def __init__(self, mcp_url: str):
         self.mcp_url = mcp_url.rstrip('/')
         self.session = requests.Session()
         logger.info(f"Initialized MCP bridge to: {self.mcp_url}")
-    
+
     def list_tools(self) -> Dict[str, Any]:
         """List available tools from remote MCP server."""
         try:
@@ -58,7 +58,7 @@ class MCPHttpBridge:
         except Exception as e:
             logger.error(f"Error listing tools: {e}")
             raise
-    
+
     def list_resources(self) -> Dict[str, Any]:
         """List available resources from remote MCP server."""
         try:
@@ -70,7 +70,7 @@ class MCPHttpBridge:
         except Exception as e:
             logger.error(f"Error listing resources: {e}")
             raise
-    
+
     def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Call a tool on the remote MCP server."""
         try:
@@ -88,12 +88,12 @@ class MCPHttpBridge:
         except Exception as e:
             logger.error(f"Error calling tool {tool_name}: {e}")
             raise
-    
+
     def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle MCP stdio request and route to HTTP endpoint."""
         method = request.get('method')
         request_id = request.get('id', 1)
-        
+
         try:
             if method == 'initialize':
                 # Initialization request
@@ -112,7 +112,7 @@ class MCPHttpBridge:
                         }
                     }
                 }
-            
+
             elif method == 'tools/list':
                 tools_data = self.list_tools()
                 return {
@@ -122,7 +122,7 @@ class MCPHttpBridge:
                         "tools": tools_data.get('tools', [])
                     }
                 }
-            
+
             elif method == 'resources/list':
                 resources_data = self.list_resources()
                 return {
@@ -132,14 +132,14 @@ class MCPHttpBridge:
                         "resources": resources_data.get('resources', [])
                     }
                 }
-            
+
             elif method == 'tools/call':
                 params = request.get('params', {})
                 tool_name = params.get('name')
                 arguments = params.get('arguments', {})
-                
+
                 result = self.call_tool(tool_name, arguments)
-                
+
                 # Format result for MCP
                 return {
                     "jsonrpc": "2.0",
@@ -153,7 +153,7 @@ class MCPHttpBridge:
                         ]
                     }
                 }
-            
+
             else:
                 return {
                     "jsonrpc": "2.0",
@@ -163,7 +163,7 @@ class MCPHttpBridge:
                         "message": f"Method not found: {method}"
                     }
                 }
-        
+
         except Exception as e:
             logger.exception(f"Error handling request: {e}")
             return {
@@ -174,11 +174,11 @@ class MCPHttpBridge:
                     "message": f"Internal error: {str(e)}"
                 }
             }
-    
+
     def run(self):
         """Run the stdio bridge - read from stdin, write to stdout."""
         logger.info("MCP HTTP bridge started, waiting for requests...")
-        
+
         while True:
             try:
                 # Read JSON-RPC request from stdin
@@ -186,21 +186,21 @@ class MCPHttpBridge:
                 if not line:
                     logger.info("EOF received, exiting")
                     break
-                
+
                 line = line.strip()
                 if not line:
                     continue
-                
+
                 request = json.loads(line)
                 logger.debug(f"Received request: {request.get('method')}")
-                
+
                 # Handle request
                 response = self.handle_request(request)
-                
+
                 # Write response to stdout
                 sys.stdout.write(json.dumps(response) + '\n')
                 sys.stdout.flush()
-                
+
             except json.JSONDecodeError as e:
                 logger.error(f"JSON decode error: {e}")
             except KeyboardInterrupt:
@@ -228,15 +228,15 @@ def main():
         help='Verify connectivity (lists tools/resources) and exit'
     )
     args = parser.parse_args()
-    
+
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     logger.info(f"Starting Dreamwalker MCP HTTP bridge")
     logger.info(f"Target server: {args.url}")
-    
+
     bridge = MCPHttpBridge(args.url)
-    
+
     try:
         if args.check:
             try:

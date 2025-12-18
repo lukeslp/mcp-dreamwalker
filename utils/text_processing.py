@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Tuple
 
 __all__ = [
     "DEFAULT_STOPWORDS",

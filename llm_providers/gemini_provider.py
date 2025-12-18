@@ -2,9 +2,10 @@
 Google Gemini provider implementation.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Union
 from . import BaseLLMProvider, Message, CompletionResponse
 import os
+import base64
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -141,3 +142,73 @@ class GeminiProvider(BaseLLMProvider):
         if "top_k" in kwargs:
             config["top_k"] = kwargs["top_k"]
         return config
+
+    def analyze_image(self, image: Union[str, bytes], prompt: str = "Describe this image", **kwargs) -> CompletionResponse:
+        """
+        Analyze an image using Gemini Vision.
+
+        Args:
+            image: Base64-encoded string or raw bytes
+            prompt: Question about the image
+            **kwargs: Optional parameters
+                - model: Vision model (default: "gemini-2.0-flash")
+                - max_tokens: Maximum response length
+
+        Returns:
+            CompletionResponse with image analysis
+        """
+        model_name = kwargs.get("model", "gemini-2.0-flash")
+        max_tokens = kwargs.get("max_tokens", 1024)
+
+        # Convert bytes to base64 if needed
+        if isinstance(image, bytes):
+            image_b64 = base64.b64encode(image).decode('utf-8')
+        else:
+            image_b64 = image
+
+        # Detect media type from base64 header
+        mime_type = "image/jpeg"
+        if image_b64.startswith('/9j/'):
+            mime_type = "image/jpeg"
+        elif image_b64.startswith('iVBOR'):
+            mime_type = "image/png"
+        elif image_b64.startswith('R0lGOD'):
+            mime_type = "image/gif"
+        elif image_b64.startswith('UklGR'):
+            mime_type = "image/webp"
+
+        # Create model and generate content with image
+        model = self.genai.GenerativeModel(model_name)
+
+        # Construct parts with text and image
+        parts = [
+            prompt,
+            {
+                "inline_data": {
+                    "mime_type": mime_type,
+                    "data": image_b64
+                }
+            }
+        ]
+
+        response = model.generate_content(
+            parts,
+            generation_config={"max_output_tokens": max_tokens}
+        )
+
+        # Extract token counts
+        usage = {
+            "prompt_tokens": response.usage_metadata.prompt_token_count,
+            "completion_tokens": response.usage_metadata.candidates_token_count,
+            "total_tokens": response.usage_metadata.total_token_count,
+        }
+
+        return CompletionResponse(
+            content=response.text,
+            model=model_name,
+            usage=usage,
+            metadata={
+                "finish_reason": response.candidates[0].finish_reason.name if response.candidates else None,
+                "vision": True
+            }
+        )

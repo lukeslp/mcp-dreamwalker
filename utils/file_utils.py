@@ -9,7 +9,7 @@ import hashlib
 import logging
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, List
 
 
 logger = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ Groq provider implementation.
 Ultra-fast inference with OpenAI-compatible API.
 """
 
-from typing import List, Dict, Any
+from typing import List
 from . import BaseLLMProvider, Message, CompletionResponse
 import os
 

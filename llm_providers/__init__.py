@@ -73,17 +73,14 @@ class BaseLLMProvider(ABC):
     @abstractmethod
     def complete(self, messages: List[Message], **kwargs) -> CompletionResponse:
         """Generate a completion from the LLM."""
-        pass
 
     @abstractmethod
     def stream_complete(self, messages: List[Message], **kwargs):
         """Stream a completion from the LLM."""
-        pass
 
     @abstractmethod
     def list_models(self) -> List[str]:
         """List available models for this provider."""
-        pass
 
     def generate_image(self, prompt: str, **kwargs) -> ImageResponse:
         """
@@ -120,7 +117,31 @@ class BaseLLMProvider(ABC):
 
 
 # Import factory for convenient access
-from .factory import ProviderFactory
+from .factory import ProviderFactory, PROVIDER_CAPABILITIES, COMPLEXITY_TIERS
+
+# Import specific providers that might be commonly imported directly
+try:
+    from .ollama_provider import OllamaProvider
+except ImportError:
+    OllamaProvider = None
+
+
+def get_provider(provider_name: str, api_key: Optional[str] = None, model: Optional[str] = None):
+    """
+    Backwards-compatible helper that returns a provider instance.
+
+    Args:
+        provider_name: Name of the provider (e.g., 'openai', 'anthropic', 'xai')
+        api_key: Optional explicit API key. When provided, a fresh provider
+                 instance is created instead of using the cached singleton.
+        model: Optional default model for the provider.
+
+    Returns:
+        BaseLLMProvider instance.
+    """
+    if api_key:
+        return ProviderFactory.create_provider(provider_name, api_key=api_key, model=model)
+    return ProviderFactory.get_provider(provider_name)
 
 __all__ = [
     'Message',
@@ -130,4 +151,7 @@ __all__ = [
     'VisionMessage',
     'BaseLLMProvider',
     'ProviderFactory',
+    'PROVIDER_CAPABILITIES',
+    'COMPLEXITY_TIERS',
+    'OllamaProvider',
 ]

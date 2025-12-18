@@ -3,7 +3,7 @@ Hugging Face provider implementation.
 Supports Inference API and Inference Endpoints for various models including Llama.
 """
 
-from typing import List, Dict, Any, Union
+from typing import List, Union
 from . import BaseLLMProvider, Message, CompletionResponse, ImageResponse
 import os
 import base64
@@ -188,6 +188,7 @@ class HuggingFaceProvider(BaseLLMProvider):
             CompletionResponse with image analysis
         """
         model = kwargs.get("model", "meta-llama/Llama-3.2-11B-Vision-Instruct")
+        max_tokens = kwargs.get("max_tokens", 1024)
 
         # Convert bytes to base64 if needed
         if isinstance(image, bytes):
@@ -195,31 +196,53 @@ class HuggingFaceProvider(BaseLLMProvider):
         else:
             image_b64 = image
 
-        # Decode to get image object
-        import io
-        from PIL import Image as PILImage
-        image_bytes = base64.b64decode(image_b64)
-        image_obj = PILImage.open(io.BytesIO(image_bytes))
+        # Detect media type from base64 header
+        media_type = "image/jpeg"
+        if image_b64.startswith('/9j/'):
+            media_type = "image/jpeg"
+        elif image_b64.startswith('iVBOR'):
+            media_type = "image/png"
+        elif image_b64.startswith('R0lGOD'):
+            media_type = "image/gif"
+        elif image_b64.startswith('UklGR'):
+            media_type = "image/webp"
 
         try:
-            response = self.client.visual_question_answering(
-                image=image_obj,
-                question=prompt,
-                model=model
+            # Use chat_completion with vision format (OpenAI-compatible)
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{media_type};base64,{image_b64}"
+                            }
+                        }
+                    ]
+                }
+            ]
+
+            response = self.client.chat_completion(
+                messages=messages,
+                model=model,
+                max_tokens=max_tokens
             )
 
-            # Response format varies by model, try to extract text
-            if isinstance(response, list) and len(response) > 0:
-                content = response[0].get('answer', str(response))
-            elif isinstance(response, dict):
-                content = response.get('answer', str(response))
-            else:
-                content = str(response)
+            content = response.choices[0].message.content
+
+            # Extract usage if available
+            usage = {
+                "prompt_tokens": getattr(response.usage, "prompt_tokens", 0) if hasattr(response, "usage") else 0,
+                "completion_tokens": getattr(response.usage, "completion_tokens", 0) if hasattr(response, "usage") else 0,
+            }
+            usage["total_tokens"] = usage["prompt_tokens"] + usage["completion_tokens"]
 
             return CompletionResponse(
                 content=content,
                 model=model,
-                usage={"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},
+                usage=usage,
                 metadata={"vision": True}
             )
         except Exception as e:

@@ -40,15 +40,13 @@ Usage:
 Author: Luke Steuber
 """
 
-import os
 import re
 import json
 import csv
 import logging
-from io import StringIO
 from pathlib import Path
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Union
+from dataclasses import dataclass
+from typing import Any, Dict, Optional, Set, Union
 
 # Optional imports with runtime checks
 try:

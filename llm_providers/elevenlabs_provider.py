@@ -3,7 +3,7 @@ ElevenLabs provider implementation.
 Supports high-quality text-to-speech with voice cloning and emotional control.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from . import BaseLLMProvider, Message, CompletionResponse, AudioResponse
 import os
 import requests

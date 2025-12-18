@@ -5,11 +5,9 @@ Access to academic paper metadata from Semantic Scholar.
 Extracted from schollama for reuse across projects.
 """
 
-import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-from datetime import datetime
 
 try:
     import aiohttp

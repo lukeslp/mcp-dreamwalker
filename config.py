@@ -31,7 +31,6 @@ Example:
 """
 
 import os
-import json
 import dotenv
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
@@ -39,7 +38,6 @@ from typing import Dict, Any, Optional, Union, List
 
 class ConfigError(Exception):
     """Configuration-related errors."""
-    pass
 
 
 class ConfigManager:
@@ -391,3 +389,7 @@ def create_config(
         Configured ConfigManager instance
     """
     return ConfigManager(app_name=app_name, defaults=defaults, **kwargs)
+
+
+# Backward compatibility alias
+Config = ConfigManager

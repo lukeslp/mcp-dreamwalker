@@ -28,7 +28,6 @@ Author: Luke Steuber
 """
 
 import os
-import sys
 import base64
 import logging
 import tempfile

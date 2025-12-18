@@ -3,7 +3,7 @@ Anthropic (Claude) provider implementation.
 Supports Claude chat models and vision capabilities.
 """
 
-from typing import List, Dict, Any, Union
+from typing import List, Union
 from . import BaseLLMProvider, Message, CompletionResponse
 import os
 import base64
@@ -158,4 +158,24 @@ class AnthropicProvider(BaseLLMProvider):
                 "stop_reason": response.stop_reason,
                 "vision": True
             }
+        )
+
+    async def chat(self, messages=None, system_prompt=None, user_prompt=None, **kwargs) -> CompletionResponse:
+        """
+        Async alias for complete() to support orchestrator compatibility.
+        Orchestrators call await chat(system_prompt=..., user_prompt=...)
+        but providers use complete(messages=[...]).
+        """
+        # Convert orchestrator's system_prompt/user_prompt to messages list
+        if messages is None and (system_prompt or user_prompt):
+            messages = []
+            if system_prompt:
+                messages.append(Message(role="system", content=system_prompt))
+            if user_prompt:
+                messages.append(Message(role="user", content=user_prompt))
+
+        # Run sync complete() in thread pool to make it awaitable
+        import asyncio
+        return await asyncio.get_event_loop().run_in_executor(
+            None, self.complete, messages, **kwargs
         )

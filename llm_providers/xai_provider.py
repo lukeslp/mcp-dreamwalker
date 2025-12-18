@@ -3,7 +3,7 @@ xAI (Grok) provider implementation.
 Supports Grok models, Aurora image generation, and Grok Vision.
 """
 
-from typing import List, Dict, Any, Union
+from typing import List, Union
 from . import BaseLLMProvider, Message, CompletionResponse, ImageResponse
 import os
 import base64

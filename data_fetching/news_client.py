@@ -13,8 +13,7 @@ Author: Luke Steuber
 
 import os
 import requests
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from typing import Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,7 +34,7 @@ class NewsClient:
         self.api_key = api_key or os.getenv('NEWS_API_KEY')
         if not self.api_key:
             raise ValueError("NEWS_API_KEY is required")
-        
+
         self.session = requests.Session()
 
     def get_top_headlines(
@@ -63,12 +62,12 @@ class NewsClient:
                 'country': country,
                 'pageSize': page_size
             }
-            
+
             if category:
                 params['category'] = category
             if query:
                 params['q'] = query
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}/top-headlines",
                 params=params,
@@ -76,7 +75,7 @@ class NewsClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             articles = []
             for item in data.get('articles', []):
                 articles.append({
@@ -88,7 +87,7 @@ class NewsClient:
                     "author": item.get("author"),
                     "image_url": item.get("urlToImage")
                 })
-            
+
             return {
                 "status": data.get('status'),
                 "total_results": data.get('totalResults', 0),
@@ -129,12 +128,12 @@ class NewsClient:
                 'sortBy': sort_by,
                 'pageSize': page_size
             }
-            
+
             if from_date:
                 params['from'] = from_date
             if to_date:
                 params['to'] = to_date
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}/everything",
                 params=params,
@@ -142,7 +141,7 @@ class NewsClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             articles = []
             for item in data.get('articles', []):
                 articles.append({
@@ -154,7 +153,7 @@ class NewsClient:
                     "published_at": item.get("publishedAt"),
                     "author": item.get("author")
                 })
-            
+
             return {
                 "query": query,
                 "total_results": data.get('totalResults', 0),
@@ -183,12 +182,12 @@ class NewsClient:
         """
         try:
             params = {'apiKey': self.api_key, 'language': language}
-            
+
             if category:
                 params['category'] = category
             if country:
                 params['country'] = country
-            
+
             response = self.session.get(
                 f"{self.BASE_URL}/sources",
                 params=params,
@@ -196,7 +195,7 @@ class NewsClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             sources = []
             for item in data.get('sources', []):
                 sources.append({
@@ -208,7 +207,7 @@ class NewsClient:
                     "country": item.get("country"),
                     "language": item.get("language")
                 })
-            
+
             return {
                 "sources": sources,
                 "count": len(sources)

@@ -367,3 +367,184 @@ def get_latest_archive(url: str) -> Optional[str]:
     client = ArchiveClient()
     snapshot = client.get_latest_snapshot(url)
     return snapshot.archive_url if snapshot else None
+
+
+class MultiArchiveClient:
+    """
+    Client supporting multiple archive providers.
+
+    Providers: wayback, archiveis, memento, 12ft
+    """
+
+    PROVIDERS = ['wayback', 'archiveis', 'memento', '12ft']
+
+    def __init__(self, user_agent: Optional[str] = None):
+        """Initialize multi-archive client"""
+        self.user_agent = user_agent or (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        )
+        self.headers = {"User-Agent": self.user_agent}
+        self.wayback_client = ArchiveClient(user_agent=user_agent)
+
+    def get_archive(
+        self,
+        url: str,
+        provider: str = 'wayback',
+        capture: bool = False
+    ) -> ArchiveResult:
+        """
+        Get archived version of URL from specified provider.
+
+        Args:
+            url: URL to find archived version for
+            provider: Archive provider (wayback, archiveis, memento, 12ft)
+            capture: Whether to capture new snapshot (archiveis only)
+
+        Returns:
+            ArchiveResult with archived URL
+        """
+        provider = provider.lower()
+
+        if provider == 'wayback':
+            return self._get_wayback(url)
+        elif provider == 'archiveis':
+            return self._get_archiveis(url, capture)
+        elif provider == 'memento':
+            return self._get_memento(url)
+        elif provider == '12ft':
+            return self._get_12ft(url)
+        else:
+            return ArchiveResult(
+                success=False,
+                error=f"Unknown provider: {provider}. Use: {', '.join(self.PROVIDERS)}"
+            )
+
+    def _get_wayback(self, url: str) -> ArchiveResult:
+        """Get from Wayback Machine"""
+        snapshot = self.wayback_client.get_latest_snapshot(url)
+        if snapshot:
+            return ArchiveResult(
+                success=True,
+                archive_url=snapshot.archive_url,
+                snapshot=snapshot
+            )
+        return ArchiveResult(success=False, error="No Wayback snapshot found")
+
+    def _get_archiveis(self, url: str, capture: bool = False) -> ArchiveResult:
+        """Get from Archive.is"""
+        try:
+            if capture:
+                # Try to use archiveis package
+                try:
+                    import archiveis
+                    archived_url = archiveis.capture(url)
+                    return ArchiveResult(success=True, archive_url=archived_url)
+                except ImportError:
+                    return ArchiveResult(
+                        success=False,
+                        error="archiveis package required for capture: pip install archiveis"
+                    )
+
+            # Check existing archive
+            archived_url = f"https://archive.is/{url}"
+            response = requests.head(
+                archived_url,
+                headers=self.headers,
+                timeout=10,
+                allow_redirects=True
+            )
+
+            if response.status_code == 200:
+                return ArchiveResult(success=True, archive_url=archived_url)
+
+            return ArchiveResult(
+                success=False,
+                error="No Archive.is snapshot found. Use capture=True to create one."
+            )
+
+        except Exception as e:
+            return ArchiveResult(success=False, error=f"Archive.is error: {e}")
+
+    def _get_memento(self, url: str) -> ArchiveResult:
+        """Get from Memento Aggregator"""
+        try:
+            # Ensure URL has protocol
+            if not url.startswith(('http://', 'https://')):
+                url = 'http://' + url
+
+            api_url = f"http://timetravel.mementoweb.org/timemap/json/{url}"
+            response = requests.get(api_url, headers=self.headers, timeout=10)
+            response.raise_for_status()
+
+            data = response.json()
+            mementos = data.get("mementos", {}).get("list", [])
+
+            if mementos:
+                latest = mementos[-1]
+                return ArchiveResult(
+                    success=True,
+                    archive_url=latest.get("uri")
+                )
+
+            return ArchiveResult(success=False, error="No Memento snapshots found")
+
+        except Exception as e:
+            return ArchiveResult(success=False, error=f"Memento error: {e}")
+
+    def _get_12ft(self, url: str) -> ArchiveResult:
+        """Get 12ft.io bypass URL"""
+        try:
+            archived_url = f"https://12ft.io/{url}"
+            response = requests.head(
+                archived_url,
+                headers=self.headers,
+                timeout=10,
+                allow_redirects=False
+            )
+
+            if response.status_code in [200, 302]:
+                return ArchiveResult(
+                    success=True,
+                    archive_url=archived_url
+                )
+
+            return ArchiveResult(
+                success=False,
+                error=f"12ft.io returned status {response.status_code}"
+            )
+
+        except Exception as e:
+            return ArchiveResult(success=False, error=f"12ft.io error: {e}")
+
+    def get_all_archives(self, url: str) -> Dict[str, ArchiveResult]:
+        """
+        Try all providers and return results.
+
+        Args:
+            url: URL to find archives for
+
+        Returns:
+            Dict mapping provider name to ArchiveResult
+        """
+        results = {}
+        for provider in self.PROVIDERS:
+            results[provider] = self.get_archive(url, provider)
+        return results
+
+
+# Convenience function for multi-provider
+def get_archive(url: str, provider: str = 'wayback') -> Optional[str]:
+    """
+    Get archived URL from any provider.
+
+    Args:
+        url: URL to archive
+        provider: Provider name (wayback, archiveis, memento, 12ft)
+
+    Returns:
+        Archived URL or None
+    """
+    client = MultiArchiveClient()
+    result = client.get_archive(url, provider)
+    return result.archive_url if result.success else None

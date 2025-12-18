@@ -34,11 +34,10 @@ Example:
 
 import os
 import json
-import time
 import hashlib
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional, List, Union
+from typing import Dict, Optional, Union
 
 import pandas as pd
 import requests

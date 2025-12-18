@@ -7,6 +7,7 @@ This shows common patterns for fetching Census data.
 from census_client import CensusClient
 from pathlib import Path
 
+
 def main():
     # Initialize client (uses CENSUS_API_KEY env var)
     client = CensusClient(

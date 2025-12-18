@@ -21,7 +21,7 @@ import sys
 from typing import Any, Dict, List, Optional
 
 # Import from shared library
-sys.path.insert(0, '/home/coolhand/shared')
+sys.path.insert(0, "/home/coolhand/shared")
 
 from config import ConfigManager
 from tools.web_search_tool import WebSearchTool
@@ -43,7 +43,7 @@ class WebSearchServer:
         Args:
             config_manager: ConfigManager instance (creates new one if None)
         """
-        self.config = config_manager or ConfigManager(app_name='mcp_web_search')
+        self.config = config_manager or ConfigManager(app_name="mcp_web_search")
 
         # Initialize web search tool (lazy loading)
         self._web_search_tool = None
@@ -77,61 +77,45 @@ class WebSearchServer:
         """
         try:
             # Extract and validate arguments
-            query = arguments.get('query')
+            query = arguments.get("query")
             if not query:
-                return {
-                    "success": False,
-                    "error": "Missing required argument: query"
-                }
+                return {"success": False, "error": "Missing required argument: query"}
 
-            provider = arguments.get('provider', 'auto')
-            num_results = arguments.get('num_results', 10)
+            provider = arguments.get("provider", "auto")
+            num_results = arguments.get("num_results", 10)
 
             # Validate provider
-            valid_providers = ['serpapi', 'tavily', 'brave', 'auto']
+            valid_providers = ["serpapi", "tavily", "brave", "auto"]
             if provider not in valid_providers:
                 return {
                     "success": False,
-                    "error": f"Invalid provider '{provider}'. Must be one of: {', '.join(valid_providers)}"
+                    "error": f"Invalid provider '{provider}'. Must be one of: {', '.join(valid_providers)}",
                 }
 
             # Validate num_results
             if not isinstance(num_results, int) or num_results < 1:
-                return {
-                    "success": False,
-                    "error": "num_results must be a positive integer"
-                }
+                return {"success": False, "error": "num_results must be a positive integer"}
 
             # Execute search
             tool = self.get_web_search_tool()
-            result = tool.web_search(
-                query=query,
-                provider=provider,
-                num_results=num_results
-            )
+            result = tool.web_search(query=query, provider=provider, num_results=num_results)
 
             # Check if tool returned an error
-            if 'error' in result:
-                return {
-                    "success": False,
-                    "error": result['error']
-                }
+            if "error" in result:
+                return {"success": False, "error": result["error"]}
 
             # Return successful result
             return {
                 "success": True,
-                "query": result.get('query', query),
-                "results": result.get('results', []),
-                "provider": result.get('provider', provider),
-                "count": result.get('count', len(result.get('results', [])))
+                "query": result.get("query", query),
+                "results": result.get("results", []),
+                "provider": result.get("provider", provider),
+                "count": result.get("count", len(result.get("results", []))),
             }
 
         except Exception as e:
             logger.exception(f"Error in web_search: {e}")
-            return {
-                "success": False,
-                "error": f"Web search error: {str(e)}"
-            }
+            return {"success": False, "error": f"Web search error: {str(e)}"}
 
     # -------------------------------------------------------------------------
     # MCP Resources
@@ -156,39 +140,35 @@ class WebSearchServer:
                 "serpapi": {
                     "name": "SerpAPI (Google Search)",
                     "configured": bool(tool.serp_key),
-                    "url": "https://serpapi.com"
+                    "url": "https://serpapi.com",
                 },
                 "tavily": {
                     "name": "Tavily Search",
                     "configured": bool(tool.tavily_key),
-                    "url": "https://tavily.com"
+                    "url": "https://tavily.com",
                 },
                 "brave": {
                     "name": "Brave Search",
                     "configured": bool(tool.brave_key),
-                    "url": "https://brave.com/search/api/"
-                }
+                    "url": "https://brave.com/search/api/",
+                },
             }
 
-            available_providers = [
-                name for name, info in providers.items()
-                if info['configured']
-            ]
+            available_providers = [name for name, info in providers.items() if info["configured"]]
 
             return {
                 "uri": uri,
                 "providers": providers,
                 "available": available_providers,
                 "default": available_providers[0] if available_providers else None,
-                "message": f"{len(available_providers)} provider(s) configured" if available_providers else "No providers configured - set SERP_API_KEY, TAVILY_API_KEY, or BRAVE_API_KEY"
+                "message": f"{len(available_providers)} provider(s) configured"
+                if available_providers
+                else "No providers configured - set SERP_API_KEY, TAVILY_API_KEY, or BRAVE_API_KEY",
             }
 
         except Exception as e:
             logger.exception(f"Error in resource_providers: {e}")
-            return {
-                "uri": uri,
-                "error": str(e)
-            }
+            return {"uri": uri, "error": str(e)}
 
     # -------------------------------------------------------------------------
     # MCP Manifests
@@ -208,26 +188,23 @@ class WebSearchServer:
                 "inputSchema": {
                     "type": "object",
                     "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Search query string"
-                        },
+                        "query": {"type": "string", "description": "Search query string"},
                         "provider": {
                             "type": "string",
                             "enum": ["serpapi", "tavily", "brave", "auto"],
                             "description": "Search provider to use (default: auto - selects first available)",
-                            "default": "auto"
+                            "default": "auto",
                         },
                         "num_results": {
                             "type": "integer",
                             "description": "Number of search results to return (default: 10)",
                             "default": 10,
                             "minimum": 1,
-                            "maximum": 100
-                        }
+                            "maximum": 100,
+                        },
                     },
-                    "required": ["query"]
-                }
+                    "required": ["query"],
+                },
             }
         ]
 
@@ -243,14 +220,14 @@ class WebSearchServer:
                 "uri": "websearch://providers",
                 "name": "Web Search Providers",
                 "description": "Information about configured search providers (SerpAPI, Tavily, Brave)",
-                "mimeType": "application/json"
+                "mimeType": "application/json",
             }
         ]
 
 
 # For testing/standalone usage
-if __name__ == '__main__':
-    import os
+if __name__ == "__main__":
+    pass
 
     # Setup logging
     logging.basicConfig(level=logging.INFO)
@@ -267,18 +244,16 @@ if __name__ == '__main__':
     print(json.dumps(providers_info, indent=2))
 
     # Test search if any provider is configured
-    if providers_info.get('available'):
+    if providers_info.get("available"):
         print(f"\n\nTesting search with query 'Claude Code MCP'...")
-        result = server.tool_web_search({
-            'query': 'Claude Code MCP',
-            'provider': 'auto',
-            'num_results': 3
-        })
+        result = server.tool_web_search(
+            {"query": "Claude Code MCP", "provider": "auto", "num_results": 3}
+        )
 
-        if result.get('success'):
+        if result.get("success"):
             print(f"\nProvider: {result['provider']}")
             print(f"Results: {result['count']}")
-            for i, item in enumerate(result.get('results', [])[:3], 1):
+            for i, item in enumerate(result.get("results", [])[:3], 1):
                 print(f"\n{i}. {item.get('title')}")
                 print(f"   {item.get('url')}")
                 print(f"   {item.get('snippet', '')[:100]}...")

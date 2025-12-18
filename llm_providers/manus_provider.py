@@ -4,7 +4,7 @@ Supports Manus agent profiles with task-based asynchronous processing.
 """
 
 from typing import List, Dict, Any, Union
-from . import BaseLLMProvider, Message, CompletionResponse, ImageResponse
+from . import BaseLLMProvider, Message, CompletionResponse
 import os
 import time
 import requests

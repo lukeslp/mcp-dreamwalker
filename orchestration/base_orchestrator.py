@@ -13,11 +13,10 @@ import time
 import uuid
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, Any, Callable
-from datetime import datetime
 
 from .models import (
-    SubTask, AgentResult, SynthesisResult, OrchestratorResult,
-    TaskStatus, AgentType, StreamEvent, EventType
+    SubTask, AgentResult, OrchestratorResult, TaskStatus,
+    AgentType, StreamEvent, EventType
 )
 from .config import OrchestratorConfig
 
@@ -112,7 +111,6 @@ class BaseOrchestrator(ABC):
                     ))
                 return subtasks
         """
-        pass
 
     @abstractmethod
     async def execute_subtask(
@@ -153,7 +151,6 @@ class BaseOrchestrator(ABC):
                     cost=response.cost or 0.0
                 )
         """
-        pass
 
     @abstractmethod
     async def synthesize_results(
@@ -185,7 +182,6 @@ class BaseOrchestrator(ABC):
 
                 return response.content
         """
-        pass
 
     async def execute_workflow(
         self,

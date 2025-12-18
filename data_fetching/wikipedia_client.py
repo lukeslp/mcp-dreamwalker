@@ -11,7 +11,7 @@ Author: Luke Steuber
 """
 
 import requests
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ class WikipediaClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             # OpenSearch returns [query, titles, descriptions, urls]
             if len(data) >= 4:
                 results = []
@@ -70,13 +70,13 @@ class WikipediaClient:
                         "description": data[2][i] if i < len(data[2]) else "",
                         "url": data[3][i] if i < len(data[3]) else ""
                     })
-                
+
                 return {
                     "query": query,
                     "results": results,
                     "count": len(results)
                 }
-            
+
             return {"query": query, "results": [], "count": 0}
         except Exception as e:
             logger.error(f"Wikipedia search error: {e}")
@@ -108,11 +108,11 @@ class WikipediaClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             pages = data.get('query', {}).get('pages', {})
             if pages:
                 page = list(pages.values())[0]
-                
+
                 return {
                     "title": page.get("title"),
                     "summary": page.get("extract"),
@@ -120,7 +120,7 @@ class WikipediaClient:
                     "image": page.get("original", {}).get("source"),
                     "url": f"https://{self.language}.wikipedia.org/wiki/{title.replace(' ', '_')}"
                 }
-            
+
             return {"error": "Article not found"}
         except Exception as e:
             logger.error(f"Wikipedia summary error: {e}")
@@ -150,11 +150,11 @@ class WikipediaClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             pages = data.get('query', {}).get('pages', {})
             if pages:
                 page = list(pages.values())[0]
-                
+
                 return {
                     "title": page.get("title"),
                     "content": page.get("extract"),
@@ -162,7 +162,7 @@ class WikipediaClient:
                     "word_count": len(page.get("extract", "").split()),
                     "url": f"https://{self.language}.wikipedia.org/wiki/{title.replace(' ', '_')}"
                 }
-            
+
             return {"error": "Article not found"}
         except Exception as e:
             logger.error(f"Wikipedia content error: {e}")
@@ -192,7 +192,7 @@ class WikipediaClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             articles = []
             for item in data.get('query', {}).get('random', []):
                 title = item.get('title')
@@ -201,7 +201,7 @@ class WikipediaClient:
                     "page_id": item.get('id'),
                     "url": f"https://{self.language}.wikipedia.org/wiki/{title.replace(' ', '_')}"
                 })
-            
+
             return {
                 "articles": articles,
                 "count": len(articles)

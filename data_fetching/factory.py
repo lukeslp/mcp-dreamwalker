@@ -80,11 +80,32 @@ class DataFetchingFactory:
             from .finance_client import FinanceClient
             return FinanceClient(**kwargs)
 
+        elif source == "pubmed":
+            from .pubmed_client import PubMedClient
+            return PubMedClient(**kwargs)
+
+        elif source in {"wolfram", "wolframalpha", "wolfram_alpha"}:
+            from .wolfram_client import WolframAlphaClient
+            return WolframAlphaClient(**kwargs)
+
+        elif source == "fec":
+            from .fec_client import FECClient
+            return FECClient(**kwargs)
+
+        elif source in {"mal", "myanimelist"}:
+            from .mal_client import MyAnimeListClient
+            return MyAnimeListClient(**kwargs)
+
+        elif source == "judiciary":
+            from .judiciary_client import JudiciaryClient
+            return JudiciaryClient(**kwargs)
+
         else:
             raise ValueError(
                 f"Unknown data source: {source}. "
                 f"Available: census, arxiv, semantic_scholar, archive, github, "
-                f"wikipedia, news, weather, openlibrary, nasa, youtube, finance"
+                f"wikipedia, news, weather, openlibrary, nasa, youtube, finance, pubmed, wolfram, "
+                f"fec, mal, judiciary"
             )
 
     @staticmethod
@@ -108,4 +129,9 @@ class DataFetchingFactory:
             "nasa",
             "youtube",
             "finance",
+            "pubmed",
+            "wolfram",
+            "fec",
+            "mal",
+            "judiciary",
         ]

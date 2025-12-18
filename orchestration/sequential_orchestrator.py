@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from .base_orchestrator import BaseOrchestrator
 from .config import OrchestratorConfig
-from .models import AgentResult, AgentType, SubTask, TaskStatus
+from .models import AgentResult, AgentType, SubTask
 
 
 class SequentialOrchestrator(BaseOrchestrator):

@@ -9,11 +9,9 @@ import os
 import sys
 import asyncio
 import tempfile
-import subprocess
 import logging
-from typing import Optional, Dict, List
+from typing import Optional, List
 from dataclasses import dataclass
-from pathlib import Path
 
 
 logger = logging.getLogger(__name__)

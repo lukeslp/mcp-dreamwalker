@@ -23,6 +23,8 @@ Usage:
     webhook_mgr = get_webhook_manager()
 """
 
+__version__ = "1.0.0"
+
 from .streaming import (
     StreamingBridge,
     WebhookManager,

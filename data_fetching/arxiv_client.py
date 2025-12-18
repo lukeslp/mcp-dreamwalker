@@ -6,7 +6,7 @@ This module offers a clean interface for searching and retrieving papers from ar
 extracted from the standalone arxiv_search.py tool for reuse across projects.
 """
 
-from typing import List, Dict, Optional, Union
+from typing import List, Dict, Optional
 from datetime import datetime
 from dataclasses import dataclass
 import logging

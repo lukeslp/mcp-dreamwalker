@@ -4,8 +4,7 @@ Data validation helpers for lightweight schema enforcement.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Sequence
 
 __all__ = [
     "ValidationError",

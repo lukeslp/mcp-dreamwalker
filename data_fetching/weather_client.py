@@ -13,7 +13,7 @@ Author: Luke Steuber
 """
 
 import requests
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)
@@ -51,17 +51,17 @@ class WeatherClient:
             )
             points_response.raise_for_status()
             points_data = points_response.json()
-            
+
             # Get the forecast URL
             forecast_url = points_data.get('properties', {}).get('forecast')
             if not forecast_url:
                 return {"error": "Could not get forecast URL for location"}
-            
+
             # Get the forecast
             forecast_response = self.session.get(forecast_url, timeout=30)
             forecast_response.raise_for_status()
             forecast_data = forecast_response.json()
-            
+
             # Get current period (usually first period)
             periods = forecast_data.get('properties', {}).get('periods', [])
             if periods:
@@ -83,7 +83,7 @@ class WeatherClient:
                         "detailed_forecast": current.get("detailedForecast")
                     }
                 }
-            
+
             return {"error": "No forecast data available"}
         except Exception as e:
             logger.error(f"Weather API error: {e}")
@@ -109,13 +109,13 @@ class WeatherClient:
             )
             points_response.raise_for_status()
             points_data = points_response.json()
-            
+
             # Get forecast
             forecast_url = points_data.get('properties', {}).get('forecast')
             forecast_response = self.session.get(forecast_url, timeout=30)
             forecast_response.raise_for_status()
             forecast_data = forecast_response.json()
-            
+
             forecast_periods = []
             for period in forecast_data.get('properties', {}).get('periods', [])[:periods]:
                 forecast_periods.append({
@@ -128,7 +128,7 @@ class WeatherClient:
                     "short_forecast": period.get("shortForecast"),
                     "detailed_forecast": period.get("detailedForecast")
                 })
-            
+
             return {
                 "location": {
                     "latitude": latitude,
@@ -157,7 +157,7 @@ class WeatherClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             alerts = []
             for feature in data.get('features', []):
                 props = feature.get('properties', {})
@@ -171,7 +171,7 @@ class WeatherClient:
                     "expires": props.get("expires"),
                     "description": props.get("description")
                 })
-            
+
             return {
                 "state": state,
                 "alerts": alerts,

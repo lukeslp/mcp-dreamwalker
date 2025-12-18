@@ -12,7 +12,7 @@ Author: Luke Steuber
 
 import os
 import requests
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ class GitHubClient:
         """
         self.api_key = api_key or os.getenv('GITHUB_TOKEN') or os.getenv('GITHUB_API_KEY')
         self.session = requests.Session()
-        
+
         if self.api_key:
             self.session.headers.update({
                 'Authorization': f'Bearer {self.api_key}',
@@ -73,7 +73,7 @@ class GitHubClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             repos = []
             for item in data.get('items', []):
                 repos.append({
@@ -85,7 +85,7 @@ class GitHubClient:
                     "url": item.get("html_url"),
                     "topics": item.get("topics", [])
                 })
-            
+
             return {
                 "query": query,
                 "total_count": data.get('total_count', 0),
@@ -118,7 +118,7 @@ class GitHubClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             results = []
             for item in data.get('items', []):
                 results.append({
@@ -128,7 +128,7 @@ class GitHubClient:
                     "url": item.get("html_url"),
                     "language": item.get("language")
                 })
-            
+
             return {
                 "query": query,
                 "total_count": data.get('total_count', 0),
@@ -156,7 +156,7 @@ class GitHubClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             return {
                 "name": data.get("full_name"),
                 "description": data.get("description"),
@@ -207,7 +207,7 @@ class GitHubClient:
             )
             response.raise_for_status()
             data = response.json()
-            
+
             issues = []
             for item in data.get('items', []):
                 issues.append({
@@ -220,7 +220,7 @@ class GitHubClient:
                     "url": item.get("html_url"),
                     "labels": [l.get("name") for l in item.get("labels", [])]
                 })
-            
+
             return {
                 "query": query,
                 "total_count": data.get('total_count', 0),

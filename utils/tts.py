@@ -10,7 +10,6 @@ import sys
 import subprocess
 import tempfile
 import logging
-from pathlib import Path
 from typing import Optional, Dict, List
 from dataclasses import dataclass
 
@@ -50,7 +49,7 @@ def check_gtts_available() -> bool:
 
     try:
         # Test internet connection by trying to get languages
-        languages = tts_langs()
+        tts_langs()
         return True
     except Exception as e:
         logger.error(f"Failed to connect to Google TTS service: {e}")

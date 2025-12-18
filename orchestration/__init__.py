@@ -44,20 +44,28 @@ from .models import (
 # Import configuration
 from .config import (
     OrchestratorConfig,
-    BeltalowdaConfig,
-    SwarmConfig,
+    DreamCascadeConfig,
+    DreamSwarmConfig,
     LessonPlanConfig
 )
+
+# Backward compatibility aliases
+BeltalowdaConfig = DreamCascadeConfig
+SwarmConfig = DreamSwarmConfig
 
 # Import base orchestrator
 from .base_orchestrator import BaseOrchestrator
 
 # Import orchestrators
-from .beltalowda_orchestrator import BeltalowdaOrchestrator
-from .swarm_orchestrator import SwarmOrchestrator
+from .dream_cascade_orchestrator import DreamCascadeOrchestrator
+from .dream_swarm_orchestrator import DreamSwarmOrchestrator
 from .sequential_orchestrator import SequentialOrchestrator
 from .conditional_orchestrator import ConditionalOrchestrator
 from .iterative_orchestrator import IterativeOrchestrator
+
+# Backward compatibility aliases
+BeltalowdaOrchestrator = DreamCascadeOrchestrator
+SwarmOrchestrator = DreamSwarmOrchestrator
 
 # Import utilities
 from .utils import (
@@ -100,19 +108,23 @@ __all__ = [
 
     # Configuration
     'OrchestratorConfig',
-    'BeltalowdaConfig',
-    'SwarmConfig',
+    'DreamCascadeConfig',
+    'DreamSwarmConfig',
     'LessonPlanConfig',
+    'BeltalowdaConfig',  # Backward compatibility
+    'SwarmConfig',  # Backward compatibility
 
     # Base orchestrator
     'BaseOrchestrator',
 
     # Orchestrators
-    'BeltalowdaOrchestrator',
-    'SwarmOrchestrator',
+    'DreamCascadeOrchestrator',
+    'DreamSwarmOrchestrator',
     'SequentialOrchestrator',
     'ConditionalOrchestrator',
     'IterativeOrchestrator',
+    'BeltalowdaOrchestrator',  # Backward compatibility
+    'SwarmOrchestrator',  # Backward compatibility
 
     # Utilities
     'calculate_progress',
