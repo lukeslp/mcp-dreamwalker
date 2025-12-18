@@ -1,0 +1,42 @@
+{
+  "name": "dreamwalker-marketplace",
+  "owner": {
+    "name": "Luke Steuber",
+    "email": "luke@dr.eamer.dev",
+    "url": "https://dr.eamer.dev"
+  },
+  "metadata": {
+    "description": "DreamWalker MCP - Multi-agent orchestration patterns, LLM provider abstraction, and data fetching utilities via Model Context Protocol.",
+    "version": "1.0.0",
+    "homepage": "https://github.com/lukeslp/mcp-dreamwalker",
+    "repository": "https://github.com/lukeslp/mcp-dreamwalker",
+    "lastUpdated": "2025-12-18"
+  },
+  "plugins": [
+    {
+      "name": "dreamwalker-mcp",
+      "source": "./",
+      "description": "Multi-agent orchestration and LLM provider abstraction via MCP protocol. Includes Dream Cascade hierarchical research, Dream Swarm multi-agent search, 9 LLM providers, and data fetching utilities.",
+      "version": "1.0.0",
+      "category": "orchestration",
+      "keywords": ["mcp", "orchestration", "multi-agent", "llm", "research", "swarm"]
+    }
+  ],
+  "mcpServers": [
+    {
+      "id": "unified",
+      "name": "Unified Orchestrator",
+      "description": "Dream Cascade & Dream Swarm orchestration with workflow_checklist utility"
+    },
+    {
+      "id": "providers",
+      "name": "LLM Providers",
+      "description": "9 LLM providers: Anthropic, OpenAI, xAI, Mistral, Cohere, Gemini, Perplexity, Groq, HuggingFace"
+    },
+    {
+      "id": "data",
+      "name": "Data Fetching",
+      "description": "Wikipedia, YouTube, Finance, Weather, GitHub, NASA, News, OpenLibrary clients"
+    }
+  ]
+}
