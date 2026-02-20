@@ -8,7 +8,7 @@
 
 ## What is Dreamwalker MCP?
 
-Dreamwalker MCP is a comprehensive Model Context Protocol (MCP) server that provides AI coding assistants (like Cursor and Claude Code) with access to:
+Dreamwalker MCP is a comprehensive Model Context Protocol (MCP) server that provides coding tools (like Cursor and Claude Code) with access to:
 
 - **31+ Tools** across 5 categories
 - **14 LLM Providers** (Anthropic, OpenAI, xAI, and more)

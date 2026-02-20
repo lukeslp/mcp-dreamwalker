@@ -19,7 +19,7 @@ Most MCP plugins give you isolated tools. Dreamwalker gives you **coordinated in
 |---------------------|--------------------------|
 | Ask 1 LLM 1 question | Deploy 8 agents in parallel, each with specialized research angles |
 | Manual synthesis | Automatic hierarchical synthesis (Belters → Drummer → Camina) |
-| Copy/paste between tools | Seamless data flow: research → synthesis → document generation |
+| Copy/paste between tools | Direct data flow: research → synthesis → document generation |
 | One-shot answers | Iterative refinement with success predicates |
 | Generic responses | Domain-specific agents (Academic, News, Technical, Financial, etc.) |
 | Text output only | Professional PDF/DOCX/Markdown reports with citations |
@@ -91,7 +91,7 @@ To make the system approachable without lore references, all components follow a
 |------|----------------|----------------|---------------------------|
 | Conductor | Top-level coordinator that accepts the user task and schedules subflows. | `conductor_<slug>` modules, `dreamwalker-conductor-<slug>` packages, `conductor.<slug>` MCP tools. | `conductor_beltalowda`, `dreamwalker-conductor-research` |
 | Orchestrator | Mid-tier orchestrator that decomposes or branches work before delegating to agents/utilities. | `orchestrator_<slug>` / `dreamwalker-orchestrator-<slug>` | `orchestrator_sequential`, `dreamwalker-orchestrator-herd` |
-| Agent | Specialized orchestrator for a narrow vertical or modality. | `agent_<slug>` / `dreamwalker-agent-<slug>` | `agent_accessibility`, `agent_lessonplan` |
+| Agent | Specialized orchestrator for a narrow vertical or modality. | `agent_<slug>` / `dreamwalker-agent-<slug>` | `agent_accessibility`, `agent_weather` |
 | Utility | Atomic tool invoked by orchestrators/agents. Subtypes use `utility-file-*`, `utility-fetch-*`, `utility-ml-*`, etc. | `utility_<slug>` / `dreamwalker-utility-<slug>` | `utility_file_academic`, `dreamwalker-utility-ml-vision` |
 
 Legacy names still resolve via `shared.naming.resolve_legacy`, but new work should use the patterns above so `dreamwalker-conductor` can locate orchestrators, agents, and utilities automatically.
@@ -140,7 +140,7 @@ orchestrate_research(
 
 ### Example 2: Market Research for Product Launch
 
-**Scenario:** Your startup is launching an AI-powered health monitoring device. You need competitive analysis, market trends, regulatory landscape, and technical feasibility.
+**Scenario:** Your startup is launching a health monitoring device. You need competitive analysis, market trends, regulatory landscape, and technical feasibility.
 
 **Without orchestration:**
 - Search Google (generic results)
@@ -514,7 +514,7 @@ Don't let 6 servers and 32+ tools overwhelm you. Here's how to think about them:
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/dreamwalker-mcp.git
+git clone https://github.com/lukeslp/mcp-dreamwalker.git
 cd dreamwalker-mcp
 
 # Install in development mode
@@ -881,7 +881,7 @@ Contributions welcome! Here's how to get started:
 
 ```bash
 # Fork and clone
-git clone https://github.com/yourusername/dreamwalker-mcp.git
+git clone https://github.com/lukeslp/mcp-dreamwalker.git
 cd dreamwalker-mcp
 
 # Create virtual environment
@@ -911,7 +911,7 @@ mypy dreamwalker_mcp/
 6. **Run tests:** `pytest tests/`
 7. **Submit PR** with description of changes
 
-### Areas We Need Help
+### Contributions Wanted
 
 - **New orchestrator patterns** (graph-based, recursive, hybrid)
 - **Additional data sources** (more tool modules)

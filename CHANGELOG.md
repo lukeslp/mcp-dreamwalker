@@ -123,6 +123,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 **Maintained by:** Luke Steuber  
-**Repository:** https://github.com/yourusername/dreamwalker-mcp  
+**Repository:** https://github.com/lukeslp/mcp-dreamwalker  
 **License:** MIT
 
